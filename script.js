@@ -28,5 +28,5 @@ document.getElementById("calculateBtn").addEventListener("click", function() {
 
   // 결과 표시
   const wakeUpStr = `${hour1} : ${min1.toString().padStart(2,'0')}, ${hour2} : ${min2.toString().padStart(2,'0')}`;
-  document.getElementById('wakeUpTime').innerText = `💖 일어날 시간:\n${hour1} : ${min1.toString().padStart(2,'0')}\n${hour2} : ${min2.toString().padStart(2,'0')} \n💤`;
+  document.getElementById('wakeUpTime').innerText = `💕 알람 시간 💕\n${hour1} : ${min1.toString().padStart(2,'0')}\n${hour2} : ${min2.toString().padStart(2,'0')} \n💤`;
 });
