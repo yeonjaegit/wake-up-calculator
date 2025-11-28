@@ -8,13 +8,19 @@
 </head>
 <body>
   <div class="container">
+    <!-- 날씨 정보 영역 -->
+    <div id="weatherBox" class="weather-box">
+      <div id="weatherInfo">날씨 정보를 불러오는 중...</div>
+    </div>
     <h1>🌸꼬꼬마 쏘연이 기상시간 계산기🌸</h1>
     <p class="subtitle">출근 시간을 입력하면<br />쏘연이가 일어날 시간을 알려줘요!</p>
     <div class="input-group">
       <input type="time" id="goTime">
     </div>
     <button id="calculateBtn">💤 계산하기 💕</button>
-    <p id="wakeUpTime"></p>
+    <div id="wakeUpTime"></div>
+    
+    <div id="cheerMsg" class="cheer-msg"></div>
   </div>
 
   <script src="script.js"></script>
