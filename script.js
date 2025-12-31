@@ -1,4 +1,4 @@
-// 랜덤 응원/사랑 문구 리스트
+// 1. 응원 문구 리스트
 const cheerList = [
   "때지 오늘도 예쁘게 시작하자!! 💖",
   "쏘연이는 오늘도 잘 할 수 있어! 🌈",
@@ -29,7 +29,7 @@ const cheerList = [
   "사랑 듬뿍! 꼬꼬마 💖",
 ];
 
-// 귀엽고 사랑스러운 기상 후 루틴 메시지 리스트
+// 2. 루틴 메시지 리스트
 const routineList = [
   "쏘연이 일어나면 물 한 잔 꼭 마셔! 💧",
   "아침에 스트레칭 살짝만 해주면 몸이 훨씬 가벼워질 거야 🧘‍♀️",
@@ -65,7 +65,12 @@ const routineList = [
   "아침에 손목, 발목 돌리기! 오늘도 건강하게! 🌀"
 ];
 
+// 3. 비 여부 판단 함수
+function analyzeRain(codes) {
+  return codes.some(code => code >= 51);
+}
 
+// 4. 계산 버튼 이벤트
 document.getElementById("calculateBtn").addEventListener("click", function() {
   const goTime = document.getElementById('goTime').value;
   if (!goTime) {
@@ -73,32 +78,20 @@ document.getElementById("calculateBtn").addEventListener("click", function() {
     return;
   }
   let [hour, min] = goTime.split(':').map(Number);
-  // 첫 번째 시간: 2시간 30분 전
-  let hour1 = hour - 2;
-  let min1 = min - 30;
-  if (min1 < 0) {
-    min1 += 60;
-    hour1 -= 1;
-  }
+  
+  let hour1 = hour - 2; let min1 = min - 30;
+  if (min1 < 0) { min1 += 60; hour1 -= 1; }
   if (hour1 < 0) hour1 += 24;
-  // 두 번째 시간: 40분 전
-  let hour2 = hour;
-  let min2 = min - 40;
-  if (min2 < 0) {
-    min2 += 60;
-    hour2 -= 1;
-  }
+
+  let hour2 = hour; let min2 = min - 40;
+  if (min2 < 0) { min2 += 60; hour2 -= 1; }
   if (hour2 < 0) hour2 += 24;
 
-  // 랜덤 기상 후 루틴 메시지
   const randomRoutine = routineList[Math.floor(Math.random() * routineList.length)];
-  // 랜덤 응원/사랑 문구 출력
   const randomCheer = cheerList[Math.floor(Math.random() * cheerList.length)];
 
-  // 결과 표시
   document.getElementById('wakeUpTime').innerText = `💕 알람 시간 💕\n${hour1} : ${min1.toString().padStart(2,'0')}\n${hour2} : ${min2.toString().padStart(2,'0')} \n`;
 
-  // cheerMsg 위에 루틴 메시지 동적 생성/갱신
   let routineElem = document.getElementById('morningRoutine');
   if (!routineElem) {
     routineElem = document.createElement('div');
@@ -108,59 +101,65 @@ document.getElementById("calculateBtn").addEventListener("click", function() {
     cheerMsgElem.parentNode.insertBefore(routineElem, cheerMsgElem);
   }
   routineElem.innerText = `💕 ${randomRoutine}`;
-
-  // 응원 메시지 갱신
   document.getElementById('cheerMsg').innerText = randomCheer;
 });
 
-// ---- 날씨 정보 표시 ----
-// Open-Meteo 무료 API 사용 (API키 불필요, 실시간/위치 기반)
+// 5. 날씨 정보 불러오기
 function fetchWeather() {
+  const infoElem = document.getElementById('weatherInfo');
   if (!navigator.geolocation) {
-    document.getElementById('weatherInfo').innerText = '위치 정보를 사용할 수 없어요.';
+    infoElem.innerText = '위치 정보를 사용할 수 없어요.';
     return;
   }
   navigator.geolocation.getCurrentPosition(success, error);
+
   function success(pos) {
     const lat = pos.coords.latitude;
     const lon = pos.coords.longitude;
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=weathercode&timezone=auto`)
+    
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode&timezone=auto`)
       .then(res => res.json())
       .then(data => {
-        if (data.current_weather) {
-          const temp = data.current_weather.temperature;
-          const code = data.current_weather.weathercode;
-          const desc = weatherCodeToKorean(code);
-          document.getElementById('weatherInfo').innerHTML = `${desc}, ${temp}°C`;
-        } else {
-          document.getElementById('weatherInfo').innerText = '날씨 정보를 불러올 수 없어요.';
+        const now = new Date();
+        const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        const tomorrowStr = `${tomorrow.getFullYear()}-${(tomorrow.getMonth() + 1).toString().padStart(2, '0')}-${tomorrow.getDate().toString().padStart(2, '0')}`;
+
+        const tomorrowData = data.hourly.time.map((t, i) => ({
+          time: t, temp: data.hourly.temperature_2m[i], code: data.hourly.weathercode[i]
+        })).filter(item => item.time.startsWith(tomorrowStr));
+
+        if (tomorrowData.length > 0) {
+          const morningCodes = tomorrowData.slice(6, 12).map(d => d.code);
+          const afternoonCodes = tomorrowData.slice(12, 21).map(d => d.code);
+          const dayTemp = Math.round(tomorrowData[14].temp);
+
+          const isMorningRain = analyzeRain(morningCodes);
+          const isAfternoonRain = analyzeRain(afternoonCodes);
+
+          let rainMsg = "";
+
+          // 멘트 뒤에만 이모지를 넣었습니다.
+          if (isMorningRain && isAfternoonRain) { 
+            rainMsg = "하루종일 비온대 우산 챙겨 !! ☔"; 
+          } else if (isMorningRain) { 
+            rainMsg = "오전에 비온대 우산 챙겨 !! ☂️";
+          } else if (isAfternoonRain) { 
+            rainMsg = "오후에 비온대 우산 챙겨 !! 🌦️";
+          } else { 
+            rainMsg = "비 소식 없음 !! ☀️";
+          }
+
+          // innerHTML에서 중복되던 ${icon}을 제거했습니다.
+          infoElem.innerHTML = 
+            `<span style="font-size:0.85em; color:#ff7eae; font-weight:bold;">내일 날씨</span><br>` +
+            `<span style="color:#4a90e2; font-weight:bold;">${rainMsg}</span><br>` +
+            `<span style="font-size:0.9em; color:#ffb6c1;">(기온 ${dayTemp}°C)</span>`;
         }
       })
-      .catch(() => {
-        document.getElementById('weatherInfo').innerText = '날씨 정보를 불러올 수 없어요.';
-      });
+      .catch(() => { infoElem.innerText = '날씨 정보를 불러올 수 없어요.'; });
   }
-  function error() {
-    document.getElementById('weatherInfo').innerText = '위치 권한이 필요해요!';
-  }
+
+  function error() { infoElem.innerText = '위치 권한을 허용해줘! 날씨 알려줄게!'; }
 }
-// 날씨 코드 한글 변환
-function weatherCodeToKorean(code) {
-  const map = {
-    0: '맑음', 1: '대체로 맑음', 2: '부분 흐림', 3: '흐림',
-    45: '안개', 48: '서리 안개',
-    51: '이슬비', 53: '이슬비', 55: '이슬비',
-    56: '서리 이슬비', 57: '서리 이슬비',
-    61: '약한 비', 63: '비', 65: '강한 비',
-    66: '서리 비', 67: '강한 서리 비',
-    71: '약한 눈', 73: '눈', 75: '강한 눈',
-    77: '진눈깨비',
-    80: '소나기', 81: '강한 소나기', 82: '매우 강한 소나기',
-    85: '약한 눈 소나기', 86: '강한 눈 소나기',
-    95: '천둥', 96: '천둥+우박', 99: '강한 천둥+우박'
-  };
-  return map[code] || '날씨 정보';
-}
+
 fetchWeather();
-
-
