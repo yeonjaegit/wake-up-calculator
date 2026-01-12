@@ -3,24 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>쏘연이 기상시간 계산기</title>
+  <title>🌸 쏘연이 케어 센터 🌸</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <!-- 날씨 정보 영역 -->
     <div id="weatherBox" class="weather-box">
       <div id="weatherInfo">날씨 정보를 불러오는 중...</div>
     </div>
-    <h1>🌸꼬꼬마 쏘연이 기상시간 계산기🌸</h1>
-    <p class="subtitle">출근 시간을 입력하면<br />쏘연이가 일어날 시간을 알려줘요!</p>
-    <div class="input-group">
-      <input type="time" id="goTime">
+
+    <div class="tab-menu">
+      <button class="tab-btn active" onclick="openTab('calcTab')">⏰ 기상 계산</button>
+      <button class="tab-btn" onclick="openTab('foodTab')">🥗 음식 가이드</button>
     </div>
-    <button id="calculateBtn">💤 계산하기 💕</button>
-    <div id="wakeUpTime"></div>
-    
-    <div id="cheerMsg" class="cheer-msg"></div>
+
+    <div id="calcTab" class="tab-content active">
+      <h1>🌸 꼬꼬마 쏘연이 기상계산 🌸</h1>
+      <p class="subtitle">출근 시간을 입력하면<br />쏘연이가 일어날 시간을 알려줘요!</p>
+      <div class="input-group">
+        <input type="time" id="goTime">
+      </div>
+      <button id="calculateBtn">💤 계산하기 💕</button>
+      <div id="wakeUpTime"></div>
+      <div id="cheerMsg" class="cheer-msg"></div>
+    </div>
+
+    <div id="foodTab" class="tab-content">
+      <h1>🥗 쏘연이 건강 식단 🥗</h1>
+      <p class="subtitle">피부를 위해 조금만 참자!<br />먹어도 되는지 검색해봐요.</p>
+      
+      <div class="search-group">
+        <input type="text" id="foodSearch" placeholder="음식 이름을 입력해봐 (예: 전, 면, 치킨)">
+        <div id="searchResult" class="search-result"></div>
+      </div>
+
+      <div class="food-info-lists">
+        <div class="food-list bad">
+          <h3>❌ 안돼요</h3>
+          <ul>
+            <li>밀가루(빵, 면, 과자)</li>
+            <li>튀김, 기름진 고기</li>
+            <li>인스턴트, 패스트푸드</li>
+            <li>매운 음식, 단 음식</li>
+            <li>찬 음료, 술</li>
+          </ul>
+        </div>
+        <div class="food-list good">
+          <h3>✅ 좋아요</h3>
+          <ul>
+            <li>자극적이지 않은 한식</li>
+            <li>익힌 채소, 나물류</li>
+            <li>기름기 없는 살코기</li>
+            <li>두부, 콩, 잡곡밥</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="script.js"></script>
