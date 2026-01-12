@@ -91,13 +91,21 @@ button#calculateBtn {
 /* 결과 표시 */
 #wakeUpTime { margin-top: 20px; font-size: 1.5em; font-weight: bold; color: #ff6b81; white-space: pre-line; }
 .cheer-msg { margin-top: 15px; font-size: 1.05em; color: #ff7eae; font-weight: 600; }
-.morning-routine { font-size: 0.95em; color: #6c757d; margin: 10px 0; }
 
 /* 음식 가이드 상세 스타일 */
 .search-result { margin-top: 15px; text-align: left; max-height: 150px; overflow-y: auto; }
 .result-item { padding: 10px; border-radius: 10px; margin-bottom: 8px; font-size: 0.9em; line-height: 1.4; }
+
 .result-item.good { background-color: #e8f5e9; color: #2e7d32; border-left: 5px solid #4caf50; }
 .result-item.bad { background-color: #ffebee; color: #c62828; border-left: 5px solid #f44336; }
+
+/* ⚠️ 애매한 음식(check) 설정: 투명도를 없애고 배경과 테두리를 입힘 */
+.result-item.check { 
+  background-color: #fffdf0; 
+  color: #856404; 
+  border-left: 5px solid #f1c40f; 
+  opacity: 1 !important;
+}
 
 .food-info-lists { display: flex; gap: 8px; margin-top: 20px; }
 .food-list { flex: 1; padding: 10px; border-radius: 15px; font-size: 0.8em; text-align: left; }
