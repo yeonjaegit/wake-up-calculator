@@ -283,7 +283,7 @@ document.getElementById("calculateBtn").addEventListener("click", function () {
         const cheerMsgElem = document.getElementById('cheerMsg');
         cheerMsgElem.parentNode.insertBefore(routineElem, cheerMsgElem);
     }
-    routineElem.innerText = `✨ 오늘의 미션: ${randomRoutine}`;
+    routineElem.innerText = `아침 미션 : ${randomRoutine}`;
     document.getElementById('cheerMsg').innerText = randomCheer;
 });
 
