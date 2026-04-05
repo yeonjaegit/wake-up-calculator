@@ -1,778 +1,454 @@
-/* 전체 배경 및 기본 설정 */
+﻿/* RESET & BASE */
+*, *::before, *::after { box-sizing: border-box; }
+
 body {
-  font-family: 'Comic Sans MS', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  font-family: 'Jua', 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f0ebff;
+  color: #2d1b69;
+  margin: 0; padding: 0;
   min-height: 100vh;
-  margin: 0;
-  background: linear-gradient(160deg, #ffdde1, #ee9ca7);
-  color: #333;
+  -webkit-font-smoothing: antialiased;
 }
 
 .container {
-  background: rgba(255, 255, 255, 0.95);
-  width: 90%;
-  max-width: 520px;
-  padding: 25px 20px;
-  border-radius: 25px;
-  text-align: center;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-  margin: 20px 0;
-}
-
-.auth-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-size: 0.9em;
-  margin-bottom: 5px;
-}
-
-#loginBtn, #logoutBtn, .period-settings-btn {
-  padding: 10px 16px;
-  font-size: 0.95em;
-  border-radius: 18px;
-  border: none;
-  background: linear-gradient(135deg, #ffd6e8, #ff9aa2);
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 6px 15px rgba(255, 138, 170, 0.2);
-  transition: 0.3s;
-}
-
-#loginBtn:hover, #logoutBtn:hover, .period-settings-btn:hover {
-  background: linear-gradient(135deg, #ff9ebf, #ff7eae);
-}
-
-.calendar-settings-btn {
-  background: #ffeff5;
-  color: #d81b60;
-  padding: 8px 12px;
-  border-radius: 14px;
-  font-weight: bold;
-  font-size: 0.9em;
-  border: none;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.calendar-settings-btn:hover {
-  background: #ffe4ec;
-}
-
-#userInfo {
-  margin: 0 10px;
-  font-weight: bold;
-  color: #7f1d56;
-}
-
-
-.calendar {
-  background: #ffffff;
-  padding: 18px;
-  border-radius: 25px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-}
-
-.calendar-header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 3px;
-}
-
-.calendar-header-top h3 {
-  position: relative;
-  margin: 0;
-  font-size: 1.2em;
-  color: #ff7eae;
-  text-align: center;
-  flex: none;
-  padding-left: 45px;
-}
-
-/* 왼쪽 버튼 */
-.calendar-header-top h3 button:first-child {
-  left: 15px;
-}
-
-/* 오른쪽 버튼 */
-.calendar-header-top h3 button:last-child {
-  right: -30px;
-}
-
-/* 버튼 공통 */
-.calendar-header-top h3 button {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  color: #ff9bb3;
-}
-
-.calendar-actions-right {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin-left: auto;
-}
-
-.period-display {
-  background: #ffeff5;
-  color: #d81b60;
-  padding: 8px 12px;
-  border-radius: 14px;
-  font-weight: bold;
-  font-size: 0.9em;
-}
-
-.calendar-grid-header {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  margin-bottom: 3px;
-  text-align: center;
-  color: #ff7eae;
-  font-weight: bold;
-}
-
-.calendar-grid-header div {
-  padding: 8px 0;
-  font-size: 0.78em;
-}
-
-.calendar-empty {
-  min-height: 110px;
-  height: 110px;
-  background: transparent;
-}
-
-.date-label {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #ffd6e8;
-  color: #a91d55;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  margin-bottom: 4px;
-}
-
-.calendar-amount {
-  font-size: 0.25em;
-  color: #d81b60;
-  font-weight: bold;
-  line-height: 1.2;
   width: 100%;
-  text-align: center;
-  padding: 0 4px;
-  height: 35px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  word-break: break-word;
-  overflow-wrap: break-word;
+  max-width: 430px;
+  margin: 0 auto;
+  background: #f0ebff;
+  min-height: 100vh;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  text-align: left;
 }
 
-.modal-day-label {
-  margin: 10px 0 14px;
-  font-size: 1em;
-  color: #444;
-}
-
-/* 탭 메뉴 스타일 */
+/* 탭 메뉴 */
 .tab-menu {
   display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-  justify-content: center;
+  background: #ffffff;
+  border-bottom: 1.5px solid #d8c8f5;
+  margin: 0; padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .tab-btn {
-  background: #f0f0f0;
-  color: #888;
-  padding: 10px 18px;
-  font-size: 0.9em;
-  border-radius: 15px;
+  flex: 1;
+  background: none;
   border: none;
+  border-bottom: 2.5px solid transparent;
+  padding: 12px 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #b0a0d0;
   cursor: pointer;
-  transition: 0.3s;
+  text-align: center;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .tab-btn.active {
-  background: #ff7eae;
-  color: white;
-  font-weight: bold;
+  color: #7c5cbf;
+  border-bottom: 2.5px solid #7c5cbf;
+  font-weight: 700;
+  background: none;
 }
 
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
-/* 날씨 정보 박스 */
+/* 날씨 박스 */
 .weather-box {
-  width: 100%;
-  background: rgba(255,255,255,0.7);
-  padding: 12px 0;
+  background: #fff;
+  padding: 10px 16px;
   text-align: center;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-  border-radius: 15px;
-  margin-bottom: 15px;
-  line-height: 1.4;
+  border-bottom: 1px solid #e8def8;
+  line-height: 1.5;
+  font-size: 12px;
+  color: #7c5cbf;
 }
 
-h1 { font-size: 1.6em; margin-bottom: 10px; }
-.subtitle { font-size: 0.95em; margin-bottom: 20px; color: #555; }
-
-/* 입력 및 버튼 */
-.input-group input[type="time"], #foodSearch {
-  width: 85%;
-  padding: 12px;
-  font-size: 1.1em;
-  border-radius: 15px;
-  border: 2px solid #ff9aa2;
-  outline: none;
-  text-align: center;
-  background-color: #fff0f5;
+/* Auth */
+.auth-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 7px 14px;
+  background: #fff;
+  border-bottom: 1px solid #e8def8;
+  font-size: 12px;
 }
 
-button#calculateBtn {
-  padding: 14px 25px;
-  font-size: 1.1em;
+#loginBtn, #logoutBtn {
+  padding: 5px 14px;
+  font-size: 12px;
   border-radius: 20px;
   border: none;
-  background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+  background: #7c5cbf;
   color: white;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 15px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* 결과 표시 */
-#wakeUpTime { margin-top: 20px; font-size: 1.5em; font-weight: bold; color: #ff6b81; white-space: pre-line; }
-.cheer-msg { margin-top: 15px; font-size: 1.05em; color: #ff7eae; font-weight: 600; }
+#userInfo { font-size: 11px; color: #a090c8; }
 
-/* 음식 가이드 상세 스타일 */
-.search-result { margin-top: 15px; text-align: left; max-height: 150px; overflow-y: auto; }
-.result-item { padding: 10px; border-radius: 10px; margin-bottom: 8px; font-size: 0.9em; line-height: 1.4; }
+/* 달력 컨테이너 */
+.calendar-container { padding: 12px 12px 0; margin: 0; }
 
-.result-item.good { background-color: #e8f5e9; color: #2e7d32; border-left: 5px solid #4caf50; }
-.result-item.bad { background-color: #ffebee; color: #c62828; border-left: 5px solid #f44336; }
-
-/* ⚠️ 애매한 음식(check) 설정: 투명도를 없애고 배경과 테두리를 입힘 */
-.result-item.check { 
-  background-color: #fffdf0; 
-  color: #856404; 
-  border-left: 5px solid #f1c40f; 
-  opacity: 1 !important;
+.calendar {
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 2px 12px rgba(124,92,191,0.10);
+  overflow: hidden;
+  padding: 0;
 }
 
-.food-info-lists { display: flex; gap: 8px; margin-top: 20px; }
-.food-list { flex: 1; padding: 10px; border-radius: 15px; font-size: 0.8em; text-align: left; }
-.food-list h3 { font-size: 0.95em; margin-bottom: 8px; text-align: center; }
-.food-list ul { padding-left: 15px; margin: 0; }
-.food-list.bad { background: #fff0f0; border: 1px solid #ffcdd2; }
-.food-list.good { background: #f0fff4; border: 1px solid #c8e6c9; }
+/* 달력 헤더 */
+.calendar-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px 8px;
+  background: #fff;
+}
 
-/* ========================================
-   가계부 스타일
-   ======================================== */
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
-/* 로그인 모달 */
-.modal {
-  position: fixed;
-  z-index: 1000;
-  top: 0;
-  left: 0;
+.month-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #5a3fa0;
+  letter-spacing: -0.3px;
+}
+
+.month-btn {
+  background: #ede7f6;
+  border: none;
+  font-size: 17px;
+  color: #7c5cbf;
+  cursor: pointer;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0; line-height: 1;
+}
+
+.calendar-actions-right { display: flex; align-items: center; gap: 6px; }
+
+.period-display {
+  font-size: 10.5px; color: #9070c0;
+  background: none; padding: 0; font-weight: 700;
+  text-align: right;
+  line-height: 1.55;
+  white-space: normal;
+  max-width: 80px;
+}
+
+.calendar-settings-btn {
+  background: #ede7f6;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  font-size: 14px;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+/* 요일 헤더 */
+.calendar-grid-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  padding: 0 6px;
+  margin: 0;
+  background: #f5f0ff;
+  border-top: 1px solid #e8def8;
+  border-bottom: 1px solid #e8def8;
+}
+
+.calendar-grid-header div {
+  padding: 6px 0; text-align: center;
+  font-size: 11px; font-weight: 700; color: #9070c0;
+}
+.calendar-grid-header div:first-child { color: #e05cbf; }
+.calendar-grid-header div:last-child { color: #7c5cbf; }
+
+/* 달력 그리드 */
+.calendar-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0;
+  padding: 6px;
+  background: #fff;
+  gap: 5px;
+}
+
+.calendar-empty {
+  background: transparent;
+  height: 68px;
+  border-radius: 14px;
+}
+
+.calendar-day {
+  background: #f5f0ff;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px 2px;
+  height: 68px;
+  overflow: visible;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, transform 0.1s;
+  border: 1.5px solid transparent;
+}
+
+.calendar-day:active {
+  transform: scale(0.95);
+  background: #e8dcfa;
+}
+
+.date-label {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 500;
+  color: #3d2068;
+  margin-bottom: 2px;
+}
+
+.calendar-day.sunday .date-label { color: #e05cbf; }
+.calendar-day.saturday .date-label { color: #7c5cbf; }
+
+.calendar-amount {
+  font-size: 8px;
+  color: #9070c0;
+  font-weight: 700;
   width: 100%;
-  height: 100%;
+  text-align: center;
+  padding: 0 3px;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 1.25;
+  overflow: visible;
+}
+
+.today {
+  background: #7c5cbf !important;
+  border: 1.5px solid #5a3fa0;
+}
+.today .date-label {
+  color: #fff !important;
+  font-weight: 800;
+}
+.today .calendar-amount {
+  color: #ddd0ff !important;
+}
+
+/* 총 지출액 */
+.total-display {
+  background: #fff;
+  padding: 10px 16px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 0 0 22px 22px;
+  margin: 0 12px 14px;
+}
+.total-label { font-size: 13px; color: #a090c8; font-weight: 600; }
+.total-amount { font-size: 17px; font-weight: 800; color: #5a3fa0; }
+
+/* 모달 - 하단 시트 */
+.modal {
+  position: fixed; z-index: 1000;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   display: flex;
   justify-content: center;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.45);
-  padding: 0 15px;
-  box-sizing: border-box;
-  visibility: hidden;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  align-items: flex-end;
+  background: rgba(50,20,100,0.35);
+  visibility: hidden; opacity: 0;
+  transition: opacity 0.25s ease;
 }
-
-.modal[style*="display: block"] {
-  visibility: visible;
-  opacity: 1;
-}
+.modal[style*="display: block"] { visibility: visible; opacity: 1; }
 
 .modal-content {
-  background: #fff;
-  margin: 0 auto;
-  max-width: 420px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+  background: #ffffff;
+  width: 100%; max-width: 430px;
+  border-radius: 28px 28px 0 0;
+  padding: 12px 20px 40px;
+  max-height: 88vh; overflow-y: auto;
   position: relative;
 }
 
-.modal-content {
-  background: #fff;
-  margin: 0 auto;
-  max-width: 420px;
-  width: 100%;
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
-  position: relative;
+.modal-content::before {
+  content: '';
+  display: block;
+  width: 36px; height: 4px;
+  background: #d8c8f5;
+  border-radius: 2px;
+  margin: 0 auto 14px;
 }
 
 .close {
-  color: #aaa;
   position: absolute;
-  right: 14px;
-  top: 14px;
-  font-size: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  width: 10px;
-  height: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  right: 18px; top: 22px;
+  width: 26px; height: 26px;
+  background: #ede7f6;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: #9070c0;
+  cursor: pointer; font-weight: bold;
+  -webkit-tap-highlight-color: transparent;
   line-height: 1;
 }
-
-.close:hover {
-  color: #000;
-}
+.close:hover { background: #d8c8f5; }
 
 .modal h2 {
-  margin-top: 0;
-  color: #ff7eae;
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #5a3fa0;
+  text-align: center;
+  letter-spacing: -0.3px;
 }
 
 .day-expense-list {
-  background: #fff0f5;
-  border-radius: 20px;
-  padding: 14px;
-  margin-bottom: 16px;
-  max-height: 220px;
-  overflow-y: auto;
-  border: 1px solid #ffdce4;
+  background: #f5f0ff;
+  border-radius: 16px;
+  padding: 0; margin-bottom: 12px;
+  max-height: 220px; overflow-y: auto;
 }
-
-.day-expense-list p {
-  margin: 0;
-  color: #7f1d56;
-}
+.day-expense-list p { margin: 0; color: #a090c8; padding: 14px; font-size: 13px; text-align: center; }
 
 .day-expense-item {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
   background: #ffffff;
-  padding: 12px 12px 10px;
-  border-radius: 16px;
-  margin-bottom: 10px;
-  border: 1px solid #ffe4ec;
+  padding: 10px 14px;
+  margin: 0;
+  border-bottom: 1px solid #ede7f6;
 }
+.day-expense-item:last-child { border-bottom: none; }
+.day-expense-item:first-child { border-radius: 16px 16px 0 0; }
+.day-expense-item:last-child:not(:first-child) { border-radius: 0 0 16px 16px; }
+.day-expense-item:only-child { border-radius: 16px; }
 
-.day-expense-item .expense-category {
-  font-weight: 700;
-  color: #7f1d56;
-  margin-bottom: 4px;
-}
+.day-expense-item .expense-category { font-weight: 700; color: #3d2068; font-size: 14px; }
+.expense-memo { font-size: 11px; color: #a090c8; margin-top: 2px; }
 
 .day-expense-right {
-  text-align: right;
-  display: flex;
-  flex-direction: row;
+  display: flex; flex-direction: row;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 8px; flex-shrink: 0;
 }
 
-.day-expense-item .expense-amount {
-  font-size: 0.9em;
-  color: #d81b60;
-  font-weight: bold;
-}
+.day-expense-item .expense-amount { font-size: 14px; font-weight: 700; color: #7c5cbf; }
 
 .small-delete-btn {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  border-radius: 50%;
-  font-size: 0.75em;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #ff9aa2;
-  color: white;
-  border: none;
-  cursor: pointer;
+  width: 20px; height: 20px; min-width: 20px;
+  border-radius: 50%; font-size: 9px;
+  padding: 0; display: inline-flex;
+  align-items: center; justify-content: center;
+  background: #d8c8f5; color: #7c5cbf;
+  border: none; cursor: pointer;
+  font-weight: 700;
+  -webkit-tap-highlight-color: transparent;
 }
-
-.small-delete-btn:hover {
-  background: #ff7eae;
-}
+.small-delete-btn:hover { background: #c4aeef; }
 
 .day-expense-total {
-  margin-bottom: 10px;
-  padding: 12px 14px;
-  background: #fff4f8;
-  border-radius: 16px;
-  border: 1px solid #ffdce4;
-  color: #d81b60;
-  font-weight: bold;
+  margin-bottom: 12px; padding: 10px 14px;
+  background: #f5f0ff; border-radius: 14px;
+  color: #5a3fa0; font-weight: 700; font-size: 14px;
 }
 
-.login-options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.login-btn {
-  padding: 12px;
-  border: none;
-  border-radius: 15px;
-  font-size: 0.95em;
-  cursor: pointer;
-  font-weight: bold;
-  transition: 0.3s;
-  color: white;
-}
-
-.google-btn {
-  background: #4285f4;
-}
-
-.google-btn:hover {
-  background: #357ae8;
-}
-
-.email-btn {
-  background: #ff7eae;
-}
-
-.email-btn:hover {
-  background: #ff5a8c;
-}
-
-.signup-btn {
-  background: #4caf50;
-}
-
-.signup-btn:hover {
-  background: #45a049;
-}
-
-.divider {
-  text-align: center;
-  color: #999;
-  margin: 5px 0;
-}
+.login-options { display: flex; flex-direction: column; gap: 10px; }
 
 .login-input {
-  padding: 10px;
-  border: 2px solid #ff9aa2;
-  border-radius: 15px;
-  font-size: 0.9em;
-  outline: none;
-  background-color: #fff0f5;
+  padding: 12px 14px; border: none;
+  border-radius: 14px; font-size: 15px;
+  outline: none; background: #f5f0ff;
+  color: #2d1b69; width: 100%;
 }
 
-/* 회계 기간 설정 */
-.accounting-period {
-  background: #fff0f5;
-  padding: 15px;
-  border-radius: 15px;
-  margin-bottom: 15px;
+.login-btn { padding: 14px; border: none; border-radius: 16px; font-size: 15px; cursor: pointer; font-weight: 700; color: white; }
+.email-btn { background: #7c5cbf; }
+.email-btn:hover { background: #5a3fa0; }
+.google-btn { background: #4285f4; }
+
+/* 회계기간 모달 입력 */
+#configStartDay, #configEndDay {
+  padding: 12px 14px; border: none;
+  border-radius: 14px; font-size: 15px;
+  outline: none; background: #f5f0ff;
+  color: #2d1b69; width: 100%;
 }
 
-.accounting-period label {
-  display: block;
-  font-weight: bold;
-  color: #ff7eae;
-  margin-bottom: 8px;
+/* 기상 계산 탭 */
+#calcTab { padding: 28px 20px; text-align: center; background: #f0ebff; min-height: 100vh; }
+h1 { font-size: 20px; margin-bottom: 8px; font-weight: 800; color: #5a3fa0; }
+.subtitle { font-size: 13px; margin-bottom: 18px; color: #9070c0; }
+
+.input-group input[type="time"] {
+  width: 85%; padding: 12px; font-size: 18px;
+  border-radius: 16px; border: 2px solid #d8c8f5; outline: none;
+  text-align: center; background: #fff; color: #3d2068;
 }
 
-.period-inputs {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 10px;
+button#calculateBtn {
+  display: block; margin: 14px auto 0;
+  padding: 14px 28px; font-size: 15px;
+  border-radius: 20px; border: none;
+  background: #7c5cbf; color: white;
+  cursor: pointer; font-weight: 700;
 }
 
-.period-inputs input {
-  flex: 1;
-  padding: 8px;
-  border: 2px solid #ff9aa2;
-  border-radius: 10px;
-  font-size: 0.9em;
-  outline: none;
-  background-color: white;
+#wakeUpTime { margin-top: 20px; font-size: 18px; font-weight: bold; color: #5a3fa0; white-space: pre-line; }
+.cheer-msg { margin-top: 10px; font-size: 13px; color: #9070c0; font-weight: 600; }
+
+/* 음식 가이드 탭 */
+#foodTab { padding: 24px 16px; text-align: center; background: #f0ebff; min-height: 100vh; }
+
+#foodSearch {
+  width: 90%; padding: 12px; font-size: 15px;
+  border-radius: 16px; border: 2px solid #d8c8f5; outline: none;
+  background: #fff; color: #2d1b69;
 }
 
-.period-btn {
-  padding: 8px 15px;
-  background: linear-gradient(135deg, #ff9a9e, #fad0c4);
-  color: white;
-  border: none;
-  border-radius: 15px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: 0.3s;
-}
+.search-group { margin-bottom: 14px; }
+.search-result { margin-top: 10px; text-align: left; max-height: 150px; overflow-y: auto; }
+.result-item { padding: 10px; border-radius: 12px; margin-bottom: 6px; font-size: 13px; line-height: 1.4; }
+.result-item.good { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
+.result-item.bad { background: #ffebee; color: #c62828; border-left: 4px solid #f44336; }
+.result-item.check { background: #fffdf0; color: #856404; border-left: 4px solid #f1c40f; }
 
-.period-btn:hover {
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
+.food-info-lists { display: flex; gap: 8px; margin-top: 16px; }
+.food-list { flex: 1; padding: 12px; border-radius: 16px; font-size: 12px; text-align: left; background: #fff; border: 1.5px solid #e8def8; }
+.food-list h3 { font-size: 13px; margin: 0 0 8px 0; text-align: center; color: #5a3fa0; font-weight: 700; }
+.food-list ul { padding-left: 14px; margin: 0; }
+.food-list li { margin-bottom: 4px; color: #5a3fa0; }
+.food-list.bad h3 { color: #c62828; }
+.food-list.bad { border-color: #ffcdd2; }
+.food-list.bad li { color: #c62828; }
+.food-list.good h3 { color: #2e7d32; }
+.food-list.good { border-color: #c8e6c9; }
+.food-list.good li { color: #2e7d32; }
 
-/* 지출 입력 폼 */
-.expense-form {
-  background: #f0fff4;
-  padding: 15px;
-  border-radius: 15px;
-  margin-bottom: 15px;
-  border: 1px solid #c8e6c9;
-  display: none;
-}
-
-.expense-form h3 {
-  margin: 0 0 10px 0;
-  color: #2e7d32;
-}
-
-.form-input {
-  width: calc(100% - 20px);
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 2px solid #c8e6c9;
-  border-radius: 10px;
-  font-size: 0.9em;
-  outline: none;
-  background-color: #fafffe;
-}
-
-.form-input:focus {
-  border-color: #4caf50;
-  box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
-}
-
-.add-btn {
-  width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, #66bb6a, #4caf50);
-  color: white;
-  border: none;
-  border-radius: 15px;
-  font-size: 1em;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.add-btn:hover {
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
-
-/* 총 지출액 표시 */
-.total-display {
-  background: #fff0f5;
-  border-radius: 15px;
-  padding: 15px;
-  margin-bottom: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-
-.total-label {
-  margin: 0;
-  font-size: 1em;
-  color: #7f1d56;
-}
-
-.total-amount {
-  font-size: 1.5em;
-  font-weight: bold;
-  color: #d84315;
-}
-
-/* 달력 스타일 */
-.calendar-container {
-  padding: 10px 15px 12px;
-  margin-bottom: 5px;
-}
-
-.calendar {
-  background: #fff;
-  padding: 18px;
-  border-radius: 25px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-}
-
-.calendar h3 {
-  margin: 0;
-  color: #ff7eae;
-}
-
-.calendar-body {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-}
-
-.calendar-day {
-  border: 1px solid #ffdce4;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #fff5f8, #fff1f5);
-  padding: 6px 8px;
-  height: 110px;
-  min-height: 110px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.calendar-day:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(255, 146, 173, 0.18);
-}
-
-.calendar-empty {
-  height: 110px;
-  background: transparent;
-  border: none;
-  padding: 8px;
-}
-
-.calendar-amount {
-  font-size: 0.9em;
-  color: #d81b60;
-  font-weight: bold;
-}
-
-/* 지출 목록 스타일 */
-.expense-list-section {
-  background: #fff0f5;
-  padding: 15px;
-  border-radius: 15px;
-}
-
-.expense-list-section h3 {
-  margin: 0 0 10px 0;
-  color: #ff6b81;
-}
-
-.expense-list {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.expense-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: white;
-  padding: 12px;
-  margin-bottom: 8px;
-  border-radius: 10px;
-  border-left: 4px solid #ff9aa2;
-  gap: 10px;
-}
-
-.expense-info {
-  flex: 1;
-  text-align: left;
-}
-
-.expense-date {
-  font-weight: bold;
-  color: #ff6b81;
-  font-size: 0.95em;
-}
-
-.expense-details {
-  display: flex;
-  gap: 8px;
-  margin-top: 3px;
-}
-
-.expense-category {
-  background: #ffe0e6;
-  color: #c2185b;
-  padding: 3px 8px;
-  border-radius: 8px;
-  font-size: 0.8em;
-  font-weight: bold;
-}
-
-.expense-memo {
-  font-size: 0.75em;
-  color: #999;
-  font-style: italic;
-}
-
-.expense-amount {
-  font-weight: bold;
-  color: #d84315;
-  min-width: 80px;
-  text-align: right;
-  font-size: 0.95em;
-}
-
-.delete-btn {
-  background: #ff6b6b;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  min-width: 24px;
-  padding: 0;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 0.75em;
-  transition: 0.2s;
-}
-
-.delete-btn:hover {
-  background: #ff4444;
-  transform: none;
-}
-
-/* 모바일 대응 */
-@media (max-width: 500px) {
-  h1 { font-size: 1.4em; }
-  .container { width: 85%; }
-  .tab-menu { gap: 5px; }
-  .tab-btn { padding: 8px 12px; font-size: 0.8em; }
-  .expense-item { flex-wrap: wrap; }
-  .total-amount { font-size: 1.6em; }
-}
-
-.today {
-    border: 1.5px solid #ff9bb3;   /* 연한 핑크 */
-    background-color: #fff7fa;     /* 아주 연한 핑크 */
-    font-weight: 600;
-}
+.expense-category { background: #ede7f6; color: #5a3fa0; padding: 2px 7px; border-radius: 8px; font-size: 11px; font-weight: 600; display: inline-block; }
+.delete-btn { background: #d8c8f5; color: #7c5cbf; border: none; border-radius: 50%; width: 20px; height: 20px; min-width: 20px; padding: 0; cursor: pointer; font-size: 9px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }

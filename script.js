@@ -796,14 +796,14 @@ async function renderCalendar() {
     let calendarHTML = `
         <div class="calendar">
             <div class="calendar-header-top">
-                <h3>
-                    <button onclick="changeMonth(-1)">◀</button>
-                    ${year}년 ${month + 1}월
-                    <button onclick="changeMonth(1)">▶</button>
-                </h3>
+                <div class="month-nav">
+                    <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+                    <span class="month-title">${year}년 ${month + 1}월</span>
+                    <button class="month-btn" onclick="changeMonth(1)">›</button>
+                </div>
                 <div class="calendar-actions-right">
-                    <div class="period-display">기간: ${periodText}</div>
-                    <button class="calendar-settings-btn" onclick="showPeriodModal()">설정</button>
+                    <div class="period-display">${periodText.replace(' ~ ', ' ~<br>')}</div>
+                    <button class="calendar-settings-btn" onclick="showPeriodModal()">✏️</button>
                 </div>
             </div>
             <div class="calendar-grid-header">
@@ -819,10 +819,13 @@ async function renderCalendar() {
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const amount = expensesByDate[dateStr] || 0;
+        const dayOfWeek = (firstDay + day - 1) % 7;
+        const weekClass = dayOfWeek === 0 ? 'sunday' : dayOfWeek === 6 ? 'saturday' : '';
         const isToday = dateStr === todayStr ? 'today' : '';
+        const classes = ['calendar-day', isToday, weekClass].filter(Boolean).join(' ');
 
         calendarHTML += `
-            <div class="calendar-day ${isToday}" data-date="${dateStr}">
+            <div class="${classes}" data-date="${dateStr}">
                 <div class="date-label">${day}</div>
                 ${amount > 0 ? `<div class="calendar-amount">₩${amount.toLocaleString()}</div>` : ''}
             </div>`;
