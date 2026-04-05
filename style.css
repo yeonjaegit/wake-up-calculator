@@ -506,7 +506,7 @@ h1 { font-size: 20px; margin-bottom: 8px; font-weight: 800; color: #5a3fa0; }
 
 .input-group input[type="time"] {
   width: 72%;
-  padding: 10px 12px;
+  padding: 10px 12px 10px 36px;
   font-size: 20px;
   font-family: 'Nunito', 'Jua', sans-serif;
   font-weight: 800;
@@ -518,12 +518,14 @@ h1 { font-size: 20px; margin-bottom: 8px; font-weight: 800; color: #5a3fa0; }
   color: #5a3fa0;
   box-shadow: 0 4px 16px rgba(124,92,191,0.13);
   letter-spacing: 2px;
+  box-sizing: border-box;
 }
 .input-group input[type="time"]::-webkit-calendar-picker-indicator {
   opacity: 0.5;
   filter: invert(30%) sepia(60%) saturate(400%) hue-rotate(230deg);
   cursor: pointer;
   scale: 1.2;
+  margin-left: auto;
 }
 
 button#calculateBtn {
