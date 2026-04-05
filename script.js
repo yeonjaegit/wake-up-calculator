@@ -427,6 +427,7 @@ function savePeriodSetting() {
 let currentUser = null;
 let accountingPeriod = { startDay: null, endDay: null };
 let currentSelectedDate = null;
+let currentEditingExpenseId = null;
 
 setDefaultAccountingPeriod();
 
@@ -464,10 +465,13 @@ function showDayModal(dateStr) {
         return;
     }
     currentSelectedDate = dateStr;
+    currentEditingExpenseId = null;
     document.getElementById('selectedDayLabel').innerText = `${dateStr} 지출 내역`;
     document.getElementById('dayExpenseCategory').value = '';
     document.getElementById('dayExpenseAmount').value = '';
     document.getElementById('dayExpenseMemo').value = '';
+    document.getElementById('saveExpenseBtn').textContent = '저장';
+    document.getElementById('cancelEditBtn').style.display = 'none';
     loadDayExpenses(dateStr);
     document.getElementById('dayModal').style.display = 'block';
 }
@@ -507,6 +511,9 @@ async function loadDayExpenses(dateStr) {
               </div>
               <div class="day-expense-right">
                 <div class="expense-amount">-${exp.amount.toLocaleString()}</div>
+                <button onclick="startEditExpense('${exp.id}','${exp.category.replace(/'/g,"\\'")}',${
+                  exp.amount},'${(exp.memo||'').replace(/'/g,"\\'")}')"
+                  class="small-edit-btn">✏️</button>
                 <button onclick="deleteExpense('${exp.id}')" class="delete-btn small-delete-btn">✕</button>
               </div>
             </div>
@@ -521,14 +528,7 @@ function closeDayModal() {
 }
 
 function addExpenseForSelectedDay() {
-    if (!currentUser) {
-        alert('로그인이 필요합니다.');
-        return;
-    }
-    if (!currentSelectedDate) {
-        alert('날짜를 선택해주세요.');
-        return;
-    }
+    if (!currentUser) { alert('로그인이 필요합니다.'); return; }
 
     const category = document.getElementById('dayExpenseCategory').value.trim();
     const amount = parseInt(document.getElementById('dayExpenseAmount').value, 10);
@@ -539,21 +539,51 @@ function addExpenseForSelectedDay() {
         return;
     }
 
-    db.collection('users').doc(currentUser.uid).collection('expenses').add({
-        date: currentSelectedDate,
-        category: category,
-        amount: amount,
-        memo: memo,
-        timestamp: new Date()
-    })
+    if (currentEditingExpenseId) {
+        // 수정 모드
+        db.collection('users').doc(currentUser.uid).collection('expenses')
+            .doc(currentEditingExpenseId)
+            .update({ category, amount, memo })
+            .then(() => {
+                cancelEdit();
+                loadDayExpenses(currentSelectedDate);
+                renderCalendar();
+            })
+            .catch(e => alert(`수정 실패: ${e.message}`));
+    } else {
+        // 신규 추가 모드
+        if (!currentSelectedDate) { alert('날짜를 선택해주세요.'); return; }
+        db.collection('users').doc(currentUser.uid).collection('expenses').add({
+            date: currentSelectedDate,
+            category, amount, memo,
+            timestamp: new Date()
+        })
         .then(() => {
-            alert('지출이 추가되었습니다!');
             closeDayModal();
             loadExpenses();
         })
-        .catch(error => {
-            alert(`저장 실패: ${error.message}`);
-        });
+        .catch(e => alert(`저장 실패: ${e.message}`));
+    }
+}
+
+function startEditExpense(id, category, amount, memo) {
+    currentEditingExpenseId = id;
+    document.getElementById('dayExpenseCategory').value = category;
+    document.getElementById('dayExpenseAmount').value = amount;
+    document.getElementById('dayExpenseMemo').value = memo;
+    document.getElementById('saveExpenseBtn').textContent = '수정 저장';
+    document.getElementById('cancelEditBtn').style.display = 'block';
+    document.getElementById('dayExpenseCategory').focus();
+    document.getElementById('dayExpenseCategory').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function cancelEdit() {
+    currentEditingExpenseId = null;
+    document.getElementById('dayExpenseCategory').value = '';
+    document.getElementById('dayExpenseAmount').value = '';
+    document.getElementById('dayExpenseMemo').value = '';
+    document.getElementById('saveExpenseBtn').textContent = '저장';
+    document.getElementById('cancelEditBtn').style.display = 'none';
 }
 
 // 로그인 모달

@@ -83,7 +83,8 @@
             <input type="text" id="dayExpenseCategory" class="login-input" placeholder="카테고리">
             <input type="number" id="dayExpenseAmount" class="login-input" placeholder="금액">
             <textarea id="dayExpenseMemo" class="login-input" placeholder="메모" rows="3"></textarea>
-            <button onclick="addExpenseForSelectedDay()" class="login-btn email-btn">저장</button>
+            <button id="saveExpenseBtn" onclick="addExpenseForSelectedDay()" class="login-btn email-btn">저장</button>
+            <button id="cancelEditBtn" onclick="cancelEdit()" class="login-btn" style="display:none;background:#d8c8f5;color:#5a3fa0;">취소</button>
           </div>
         </div>
       </div>
