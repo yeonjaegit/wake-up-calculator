@@ -497,7 +497,7 @@ async function loadDayExpenses(dateStr) {
         dayExpenses.sort((a, b) => new Date(b.timestamp?.toDate ? b.timestamp.toDate() : b.timestamp) - new Date(a.timestamp?.toDate ? a.timestamp.toDate() : a.timestamp));
 
         const totalForDay = dayExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-        document.getElementById('dayExpenseTotal').textContent = `총 지출: ₩${totalForDay.toLocaleString()}`;
+        document.getElementById('dayExpenseTotal').textContent = `총 지출: ₩-${totalForDay.toLocaleString()}`;
 
         listContainer.innerHTML = dayExpenses.map(exp => `
             <div class="day-expense-item">
@@ -506,7 +506,7 @@ async function loadDayExpenses(dateStr) {
                 ${exp.memo ? `<div class="expense-memo">${exp.memo}</div>` : ''}
               </div>
               <div class="day-expense-right">
-                <div class="expense-amount">₩${exp.amount.toLocaleString()}</div>
+                <div class="expense-amount">₩-${exp.amount.toLocaleString()}</div>
                 <button onclick="deleteExpense('${exp.id}')" class="delete-btn small-delete-btn">✕</button>
               </div>
             </div>
@@ -787,10 +787,12 @@ async function renderCalendar() {
     let calendarHTML = `
         <div class="calendar">
             <div class="calendar-header-top">
-                <button class="month-btn" onclick="changePeriod(-1)">‹</button>
-                <span class="period-title">${headerText}</span>
+                <div class="header-period-nav">
+                    <button class="month-btn" onclick="changePeriod(-1)">‹</button>
+                    <span class="period-title">${headerText}</span>
+                    <button class="month-btn" onclick="changePeriod(1)">›</button>
+                </div>
                 <button class="calendar-settings-btn" onclick="showPeriodModal()">✏️</button>
-                <button class="month-btn" onclick="changePeriod(1)">›</button>
             </div>
             <div class="calendar-grid-header">
                 <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
@@ -808,12 +810,14 @@ async function renderCalendar() {
         const isToday = dateStr === todayStr ? 'today' : '';
         const classes = ['calendar-day', isToday, weekClass].filter(Boolean).join(' ');
         const dayNum = d.getDate();
+        const amountStr = amount > 0 ? `-${amount.toLocaleString()}` : '';
+        const amountFS = amountStr.length <= 7 ? '8px' : amountStr.length <= 9 ? '7px' : amountStr.length <= 11 ? '6px' : '5px';
 
         calendarHTML += `
             <div class="${classes}" data-date="${dateStr}">
                 ${dayNum === 1 ? `<div class="month-mini">${d.getMonth() + 1}월</div>` : ''}
                 <div class="date-label">${dayNum}</div>
-                ${amount > 0 ? `<div class="calendar-amount">-${amount.toLocaleString()}</div>` : ''}
+                ${amount > 0 ? `<div class="calendar-amount" style="font-size:${amountFS}">${amountStr}</div>` : ''}
             </div>`;
         d.setDate(d.getDate() + 1);
     }
