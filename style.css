@@ -108,7 +108,6 @@ body {
 
 .calendar-header-top {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 10px 10px 8px;
   background: #fff;
@@ -117,6 +116,7 @@ body {
 .header-period-nav {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 2px;
   flex: 1;
 }
@@ -197,13 +197,15 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 4px 2px;
+  padding: 4px 1px;
   height: 68px;
-  overflow: hidden;
+  overflow: visible;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background 0.15s, transform 0.1s;
   border: 1.5px solid transparent;
+  position: relative;
+  z-index: 0;
 }
 
 .calendar-day:active {
@@ -233,15 +235,15 @@ body {
 .calendar-day.saturday .date-label { color: #7c5cbf; }
 
 .calendar-amount {
-  font-size: 8px;
   color: #9070c0;
   font-weight: 700;
   width: 100%;
   text-align: center;
-  padding: 0 2px;
+  padding: 0;
   white-space: nowrap;
-  overflow: hidden;
+  overflow: visible;
   line-height: 1.2;
+  letter-spacing: -0.3px;
 }
 
 .today {
@@ -326,10 +328,11 @@ body {
 }
 
 .day-expense-list {
-  background: #f5f0ff;
-  border-radius: 16px;
+  background: transparent;
+  border-radius: 0;
   padding: 0; margin-bottom: 12px;
   max-height: 220px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 6px;
 }
 .day-expense-list p { margin: 0; color: #a090c8; padding: 14px; font-size: 13px; text-align: center; }
 
@@ -338,17 +341,14 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  background: #ffffff;
-  padding: 10px 14px;
-  margin: 5px;
-  border-radius: 12px;
+  background: #ede7f6;
+  padding: 11px 14px;
+  margin: 0;
+  border-radius: 14px;
   border-bottom: none;
-  box-shadow: 0 1px 5px rgba(124,92,191,0.10);
+  box-shadow: none;
 }
 .day-expense-item:last-child { border-bottom: none; }
-.day-expense-item:first-child { border-radius: 12px; }
-.day-expense-item:last-child:not(:first-child) { border-radius: 12px; }
-.day-expense-item:only-child { border-radius: 12px; }
 
 .day-expense-item .expense-category { font-weight: 700; color: #3d2068; font-size: 14px; }
 .expense-memo { font-size: 11px; color: #a090c8; margin-top: 2px; }

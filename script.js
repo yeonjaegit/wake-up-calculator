@@ -454,7 +454,7 @@ function updateAuthUI() {
         logoutBtn.style.display = 'none';
         userInfo.style.display = 'none';
         if (expenseForm) expenseForm.style.display = 'none';
-        document.getElementById('totalAmount').textContent = '₩0';
+        document.getElementById('totalAmount').textContent = '0';
     }
 }
 
@@ -483,7 +483,7 @@ async function loadDayExpenses(dateStr) {
             .get();
 
         if (snapshot.empty) {
-            document.getElementById('dayExpenseTotal').textContent = '총 지출: ₩0';
+            document.getElementById('dayExpenseTotal').textContent = '총 지출: 0';
             listContainer.innerHTML = '<p>이 날짜에 등록된 지출이 없습니다.</p>';
             return;
         }
@@ -497,7 +497,7 @@ async function loadDayExpenses(dateStr) {
         dayExpenses.sort((a, b) => new Date(b.timestamp?.toDate ? b.timestamp.toDate() : b.timestamp) - new Date(a.timestamp?.toDate ? a.timestamp.toDate() : a.timestamp));
 
         const totalForDay = dayExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-        document.getElementById('dayExpenseTotal').textContent = `총 지출: ₩-${totalForDay.toLocaleString()}`;
+        document.getElementById('dayExpenseTotal').textContent = `총 지출: -${totalForDay.toLocaleString()}`;
 
         listContainer.innerHTML = dayExpenses.map(exp => `
             <div class="day-expense-item">
@@ -506,7 +506,7 @@ async function loadDayExpenses(dateStr) {
                 ${exp.memo ? `<div class="expense-memo">${exp.memo}</div>` : ''}
               </div>
               <div class="day-expense-right">
-                <div class="expense-amount">₩-${exp.amount.toLocaleString()}</div>
+                <div class="expense-amount">-${exp.amount.toLocaleString()}</div>
                 <button onclick="deleteExpense('${exp.id}')" class="delete-btn small-delete-btn">✕</button>
               </div>
             </div>
@@ -703,7 +703,7 @@ async function loadExpenses() {
         });
 
         // 화면 상단 '총 지출' 텍스트 업데이트
-        document.getElementById('totalAmount').textContent = `₩${totalForPeriod.toLocaleString()}`;
+        document.getElementById('totalAmount').textContent = `-${totalForPeriod.toLocaleString()}`;
 
         // 달력은 모든 데이터를 다 그리도록 호출
         renderCalendar();
@@ -778,7 +778,7 @@ async function renderCalendar() {
     }
 
     const totalElem = document.getElementById('totalAmount');
-    if (totalElem) totalElem.textContent = periodTotal > 0 ? `-₩${periodTotal.toLocaleString()}` : '₩0';
+    if (totalElem) totalElem.textContent = periodTotal > 0 ? `-${periodTotal.toLocaleString()}` : '0';
 
     const startDayOfWeek = periodStart.getDay();
     const today = new Date();
@@ -811,7 +811,8 @@ async function renderCalendar() {
         const classes = ['calendar-day', isToday, weekClass].filter(Boolean).join(' ');
         const dayNum = d.getDate();
         const amountStr = amount > 0 ? `-${amount.toLocaleString()}` : '';
-        const amountFS = amountStr.length <= 7 ? '8px' : amountStr.length <= 9 ? '7px' : amountStr.length <= 11 ? '6px' : '5px';
+        const len = amountStr.length;
+        const amountFS = len <= 7 ? '8.5px' : len <= 9 ? '7.5px' : len <= 11 ? '6.5px' : len <= 13 ? '5.5px' : '4.5px';
 
         calendarHTML += `
             <div class="${classes}" data-date="${dateStr}">
