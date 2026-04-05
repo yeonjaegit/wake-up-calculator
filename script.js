@@ -390,7 +390,7 @@ function updatePeriodInfoDisplay() {
 function showPeriodModal() {
     const modal = document.getElementById('periodModal');
     if (!modal) return;
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
     const startInput = document.getElementById('configStartDay');
     const endInput = document.getElementById('configEndDay');
     if (startInput && endInput) {
@@ -475,7 +475,7 @@ function showDayModal(dateStr) {
     document.getElementById('saveExpenseBtn').textContent = '저장 !!';
     document.getElementById('cancelEditBtn').style.display = 'none';
     loadDayExpenses(dateStr);
-    document.getElementById('dayModal').style.display = 'block';
+    document.getElementById('dayModal').style.display = 'flex';
 }
 
 async function loadDayExpenses(dateStr) {
@@ -541,12 +541,16 @@ function addExpenseForSelectedDay() {
         alert('카테고리와 금액을 모두 입력하세요.');
         return;
     }
+    if (!payment) {
+        alert('지출 방식 선택해조 !!');
+        return;
+    }
 
     if (currentEditingExpenseId) {
         // 수정 모드
         db.collection('users').doc(currentUser.uid).collection('expenses')
             .doc(currentEditingExpenseId)
-            .update({ category, amount, memo, payment })
+            .set({ category, amount, memo, payment }, { merge: true })
             .then(() => {
                 cancelEdit();
                 loadDayExpenses(currentSelectedDate);
@@ -595,7 +599,7 @@ function cancelEdit() {
 function showLoginModal() {
     const modal = document.getElementById('loginModal');
     if (!modal) return;
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
 }
 
 function closeLoginModal() {
