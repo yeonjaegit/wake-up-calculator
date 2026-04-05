@@ -514,7 +514,7 @@ async function loadDayExpenses(dateStr) {
               <div class="day-expense-right">
                 <div class="expense-amount">-${exp.amount.toLocaleString()}</div>
                 <button onclick="startEditExpense('${exp.id}','${exp.category.replace(/'/g,"\\'")}',${
-                  exp.amount},'${(exp.memo||'').replace(/'/g,"\\'")}','${(exp.payment||'').replace(/'/g,"\\'")}')"
+                  exp.amount},'${(exp.memo||'').replace(/'/g,"\\'")}',' ${(exp.payment||'').replace(/'/g,"\\'")}','${exp.date}')"
                   class="small-edit-btn">✏️</button>
                 <button onclick="deleteExpense('${exp.id}')" class="delete-btn small-delete-btn">✕</button>
               </div>
@@ -548,13 +548,14 @@ function addExpenseForSelectedDay() {
 
     if (currentEditingExpenseId) {
         // 수정 모드
+        const newDate = document.getElementById('editDateInput').value || currentSelectedDate;
         db.collection('users').doc(currentUser.uid).collection('expenses')
             .doc(currentEditingExpenseId)
-            .set({ category, amount, memo, payment }, { merge: true })
+            .set({ category, amount, memo, payment, date: newDate }, { merge: true })
             .then(() => {
                 cancelEdit();
                 loadDayExpenses(currentSelectedDate);
-                renderCalendar();
+                loadExpenses();
             })
             .catch(e => alert(`수정 실패: ${e.message}`));
     } else {
@@ -573,12 +574,15 @@ function addExpenseForSelectedDay() {
     }
 }
 
-function startEditExpense(id, category, amount, memo, payment) {
+function startEditExpense(id, category, amount, memo, payment, date) {
     currentEditingExpenseId = id;
     document.getElementById('dayExpenseCategory').value = category;
     document.getElementById('dayExpenseAmount').value = amount;
     document.getElementById('dayExpenseMemo').value = memo;
-    document.getElementById('dayExpensePayment').value = payment || '';
+    document.getElementById('dayExpensePayment').value = payment || '현금';
+    document.getElementById('dayExpensePayment').options[0].style.display = 'none';
+    document.getElementById('editDateInput').value = date || currentSelectedDate;
+    document.getElementById('editDateRow').style.display = 'block';
     document.getElementById('saveExpenseBtn').textContent = '수정 후 저장 !!';
     document.getElementById('cancelEditBtn').style.display = 'block';
     document.getElementById('dayExpenseCategory').focus();
@@ -591,6 +595,8 @@ function cancelEdit() {
     document.getElementById('dayExpenseAmount').value = '';
     document.getElementById('dayExpenseMemo').value = '';
     document.getElementById('dayExpensePayment').value = '';
+    document.getElementById('dayExpensePayment').options[0].style.display = '';
+    document.getElementById('editDateRow').style.display = 'none';
     document.getElementById('saveExpenseBtn').textContent = '저장';
     document.getElementById('cancelEditBtn').style.display = 'none';
 }
