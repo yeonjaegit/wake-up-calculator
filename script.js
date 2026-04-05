@@ -514,7 +514,7 @@ async function loadDayExpenses(dateStr) {
               <div class="day-expense-right">
                 <div class="expense-amount">-${exp.amount.toLocaleString()}</div>
                 <button onclick="startEditExpense('${exp.id}','${exp.category.replace(/'/g,"\\'")}',${
-                  exp.amount},'${(exp.memo||'').replace(/'/g,"\\'")}',' ${(exp.payment||'').replace(/'/g,"\\'")}','${exp.date}')"
+                  exp.amount},'${(exp.memo||'').replace(/'/g,"\\'")}','${(exp.payment||'').replace(/'/g,"\\'")}','${exp.date}')"
                   class="small-edit-btn">✏️</button>
                 <button onclick="deleteExpense('${exp.id}')" class="delete-btn small-delete-btn">✕</button>
               </div>
@@ -554,7 +554,7 @@ function addExpenseForSelectedDay() {
             .set({ category, amount, memo, payment, date: newDate }, { merge: true })
             .then(() => {
                 cancelEdit();
-                loadDayExpenses(currentSelectedDate);
+                closeDayModal();
                 loadExpenses();
             })
             .catch(e => alert(`수정 실패: ${e.message}`));
@@ -596,6 +596,7 @@ function cancelEdit() {
     document.getElementById('dayExpenseMemo').value = '';
     document.getElementById('dayExpensePayment').value = '';
     document.getElementById('dayExpensePayment').options[0].style.display = '';
+    document.getElementById('editDateInput').value = '';
     document.getElementById('editDateRow').style.display = 'none';
     document.getElementById('saveExpenseBtn').textContent = '저장';
     document.getElementById('cancelEditBtn').style.display = 'none';
