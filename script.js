@@ -1,4 +1,22 @@
+// ========================================
+// 0. Firebase 초기화
+// ========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyCZYRDqIbmHJjprrUOe8YHtO39lLTvaeAg",
+  authDomain: "soyeon-present.firebaseapp.com",
+  projectId: "soyeon-present",
+  storageBucket: "soyeon-present.firebasestorage.app",
+  messagingSenderId: "842008448776",
+  appId: "1:842008448776:web:b5579525f8ebc93a28e6bd"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// ========================================
 // 1. 응원 문구 리스트 (기존 유지)
+// ========================================
 const cheerList = [
     "때지 오늘도 예쁘게 시작하자!! 💖",
     "쏘연이는 오늘도 잘 할 수 있어! 🌈",
@@ -219,12 +237,18 @@ const foodDb = [
     { name: "과일", status: "good", msg: "비타민 충전하고 피부 광 내자 🍎" }
 ];
 
-// 탭 전환 로직
-function openTab(tabId) {
+// ========================================
+// 기존 기능: 탭 전환 로직
+// ========================================
+function openTab(tabId, button) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
-    event.currentTarget.classList.add('active');
+    if (button) button.classList.add('active');
+
+    if (tabId === 'ledgerTab') {
+        setTimeout(() => renderCalendar(), 100);
+    }
 }
 
 // 음식 검색 로직
@@ -322,3 +346,476 @@ function fetchWeather() {
     function error() { infoElem.innerText = '위치 권한을 허용해줘! 날씨 알려줄게!'; }
 }
 fetchWeather();
+
+function formatDateForInput(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function getCurrentPeriodRange(reference = new Date()) {
+    if (!accountingPeriod.startDay || !accountingPeriod.endDay) {
+        accountingPeriod.startDay = 25;
+        accountingPeriod.endDay = 24;
+    }
+
+    const startDay = accountingPeriod.startDay;
+    const endDay = accountingPeriod.endDay;
+    const year = reference.getFullYear();
+    const month = reference.getMonth();
+
+    let startDate, endDate;
+    if (reference.getDate() >= startDay) {
+        startDate = new Date(year, month, startDay);
+        endDate = new Date(year, month + 1, endDay);
+    } else {
+        startDate = new Date(year, month - 1, startDay);
+        endDate = new Date(year, month, endDay);
+    }
+
+    return { startDate, endDate };
+}
+
+function setDefaultAccountingPeriod() {
+    accountingPeriod.startDay = 25;
+    accountingPeriod.endDay = 24;
+    updatePeriodInfoDisplay();
+
+    const startInput = document.getElementById('configStartDay');
+    const endInput = document.getElementById('configEndDay');
+    if (startInput && endInput) {
+        startInput.value = accountingPeriod.startDay;
+        endInput.value = accountingPeriod.endDay;
+    }
+}
+
+function updatePeriodInfoDisplay() {
+    const info = document.getElementById('periodInfo');
+    if (!info) return;
+    info.textContent = `${accountingPeriod.startDay}일 ~ ${accountingPeriod.endDay}일`; 
+}
+
+function showPeriodModal() {
+    const modal = document.getElementById('periodModal');
+    if (!modal) return;
+    modal.style.display = 'block';
+    const startInput = document.getElementById('configStartDay');
+    const endInput = document.getElementById('configEndDay');
+    if (startInput && endInput) {
+        startInput.value = accountingPeriod.startDay;
+        endInput.value = accountingPeriod.endDay;
+    }
+}
+
+function closePeriodModal() {
+    const modal = document.getElementById('periodModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+}
+
+function savePeriodSetting() {
+    const startDay = parseInt(document.getElementById('configStartDay').value, 10);
+    const endDay = parseInt(document.getElementById('configEndDay').value, 10);
+
+    if (!startDay || !endDay) {
+        alert('시작일과 종료일을 모두 입력하세요.');
+        return;
+    }
+    if (startDay < 1 || startDay > 31 || endDay < 1 || endDay > 31) {
+        alert('1일부터 31일 사이의 숫자를 입력하세요.');
+        return;
+    }
+
+    accountingPeriod.startDay = startDay;
+    accountingPeriod.endDay = endDay;
+    updatePeriodInfoDisplay();
+    closePeriodModal();
+    renderCalendar();
+    loadExpenses();
+}
+
+// ========================================
+// 가계부 기능 (Firebase 연동)
+// ========================================
+
+let currentUser = null;
+let accountingPeriod = { startDay: null, endDay: null };
+let currentSelectedDate = null;
+
+setDefaultAccountingPeriod();
+
+// 인증 상태 모니터링
+auth.onAuthStateChanged((user) => {
+    currentUser = user;
+    updateAuthUI();
+});
+
+// UI 업데이트 함수
+function updateAuthUI() {
+    const authStatus = document.getElementById('authStatus');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userInfo = document.getElementById('userInfo');
+    const expenseForm = document.querySelector('.expense-form');
+
+    if (currentUser) {
+        authStatus.style.display = 'none';
+        if (expenseForm) expenseForm.style.display = 'block';
+        loadExpenses();
+    } else {
+        authStatus.style.display = 'flex';
+        loginBtn.style.display = 'inline';
+        logoutBtn.style.display = 'none';
+        userInfo.style.display = 'none';
+        if (expenseForm) expenseForm.style.display = 'none';
+        document.getElementById('totalAmount').textContent = '₩0';
+    }
+}
+
+function showDayModal(dateStr) {
+    if (!currentUser) {
+        showLoginModal();
+        return;
+    }
+    currentSelectedDate = dateStr;
+    document.getElementById('selectedDayLabel').innerText = `${dateStr} 지출 내역`;
+    document.getElementById('dayExpenseCategory').value = '';
+    document.getElementById('dayExpenseAmount').value = '';
+    document.getElementById('dayExpenseMemo').value = '';
+    loadDayExpenses(dateStr);
+    document.getElementById('dayModal').style.display = 'block';
+}
+
+async function loadDayExpenses(dateStr) {
+    const listContainer = document.getElementById('dayExpenseList');
+    if (!listContainer) return;
+    listContainer.innerHTML = '<p>로딩 중...</p>';
+
+    try {
+        const snapshot = await db.collection('users').doc(currentUser.uid).collection('expenses')
+            .where('date', '==', dateStr)
+            .get();
+
+        if (snapshot.empty) {
+            document.getElementById('dayExpenseTotal').textContent = '총 지출: ₩0';
+            listContainer.innerHTML = '<p>이 날짜에 등록된 지출이 없습니다.</p>';
+            return;
+        }
+
+        const dayExpenses = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            dayExpenses.push({ id: doc.id, ...data });
+        });
+
+        dayExpenses.sort((a, b) => new Date(b.timestamp?.toDate ? b.timestamp.toDate() : b.timestamp) - new Date(a.timestamp?.toDate ? a.timestamp.toDate() : a.timestamp));
+
+        const totalForDay = dayExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+        document.getElementById('dayExpenseTotal').textContent = `총 지출: ₩${totalForDay.toLocaleString()}`;
+
+        listContainer.innerHTML = dayExpenses.map(exp => `
+            <div class="day-expense-item">
+              <div>
+                <div class="expense-category">${exp.category}</div>
+                ${exp.memo ? `<div class="expense-memo">${exp.memo}</div>` : ''}
+              </div>
+              <div class="day-expense-right">
+                <div class="expense-amount">₩${exp.amount.toLocaleString()}</div>
+                <button onclick="deleteExpense('${exp.id}')" class="delete-btn small-delete-btn">✕</button>
+              </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        listContainer.innerHTML = `<p>불러오기 실패: ${error.message}</p>`;
+    }
+}
+
+function closeDayModal() {
+    document.getElementById('dayModal').style.display = 'none';
+}
+
+function addExpenseForSelectedDay() {
+    if (!currentUser) {
+        alert('로그인이 필요합니다.');
+        return;
+    }
+    if (!currentSelectedDate) {
+        alert('날짜를 선택해주세요.');
+        return;
+    }
+
+    const category = document.getElementById('dayExpenseCategory').value.trim();
+    const amount = parseInt(document.getElementById('dayExpenseAmount').value, 10);
+    const memo = document.getElementById('dayExpenseMemo').value.trim();
+
+    if (!category || !amount || amount <= 0) {
+        alert('카테고리와 금액을 모두 입력하세요.');
+        return;
+    }
+
+    db.collection('users').doc(currentUser.uid).collection('expenses').add({
+        date: currentSelectedDate,
+        category: category,
+        amount: amount,
+        memo: memo,
+        timestamp: new Date()
+    })
+        .then(() => {
+            alert('지출이 추가되었습니다!');
+            closeDayModal();
+            loadExpenses();
+        })
+        .catch(error => {
+            alert(`저장 실패: ${error.message}`);
+        });
+}
+
+// 로그인 모달
+function showLoginModal() {
+    const modal = document.getElementById('loginModal');
+    if (!modal) return;
+    modal.style.display = 'block';
+}
+
+function closeLoginModal() {
+    const modal = document.getElementById('loginModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+}
+
+// Google 로그인
+function loginWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+        .then(() => {
+            closeLoginModal();
+            alert('Google 로그인 성공!');
+        })
+        .catch(error => {
+            closeLoginModal();
+            alert(`로그인 실패: ${error.message}`);
+        });
+}
+
+// 이메일 로그인
+function loginWithEmail() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    if (!email || !password) {
+        alert('이메일과 비밀번호를 입력하세요.');
+        return;
+    }
+
+    auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+            closeLoginModal();
+            alert('로그인 성공!');
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        })
+        .catch(error => {
+            alert(`로그인 실패: ${error.message}`);
+        });
+}
+
+// 회원가입
+function signupWithEmail() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    if (!email || !password) {
+        alert('이메일과 비밀번호를 입력하세요.');
+        return;
+    }
+
+    if (password.length < 6) {
+        alert('비밀번호는 6자 이상이어야 합니다.');
+        return;
+    }
+
+    auth.createUserWithEmailAndPassword(email, password)
+        .then(() => {
+            alert('회원가입 성공! 로그인되었습니다.');
+            closeLoginModal();
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        })
+        .catch(error => {
+            alert(`회원가입 실패: ${error.message}`);
+        });
+}
+
+// 로그아웃
+function logout() {
+    auth.signOut()
+        .then(() => {
+            alert('로그아웃되었습니다.');
+        })
+        .catch(error => {
+            alert(`로그아웃 실패: ${error.message}`);
+        });
+}
+
+// 회계 기간 설정
+function updatePeriod() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    if (!startDate || !endDate) {
+        alert('시작일과 종료일을 모두 입력하세요.');
+        return;
+    }
+
+    if (new Date(startDate) > new Date(endDate)) {
+        alert('시작일은 종료일보다 빠른 날짜여야 합니다.');
+        return;
+    }
+
+    accountingPeriod.start = startDate;
+    accountingPeriod.end = endDate;
+    alert(`회계 기간이 설정되었습니다: ${startDate} ~ ${endDate}`);
+    loadExpenses();
+}
+
+// 지출 삭제
+function deleteExpense(expenseId) {
+    if (!currentUser) return;
+
+    // ✅ 삭제 전 확인 alert
+    const isConfirmed = confirm("정말 삭제할거야??!!");
+
+    if (!isConfirmed) return; // 취소 누르면 종료
+
+    db.collection('users').doc(currentUser.uid).collection('expenses').doc(expenseId).delete()
+        .then(() => {
+            alert('지출 삭제했떠');
+            loadExpenses();
+        })
+        .catch(error => {
+            alert(`삭제 실패ㅠ.ㅠ 연재에게 문의하시오!!: ${error.message}`);
+        });
+}
+
+// 지출 목록 로드
+async function loadExpenses() {
+    if (!currentUser) return;
+
+    try {
+        const snapshot = await db.collection('users').doc(currentUser.uid).collection('expenses').get();
+
+        if (snapshot.empty) {
+            document.getElementById('totalAmount').textContent = '₩0';
+            renderCalendar();
+            return;
+        }
+
+        let expenses = [];
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            expenses.push({ id: doc.id, ...data });
+        });
+
+        if (accountingPeriod.start && accountingPeriod.end) {
+            expenses = filterByPeriod(expenses);
+        }
+
+        const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+        document.getElementById('totalAmount').textContent = `₩${total.toLocaleString()}`;
+        renderCalendar();
+    } catch (error) {
+        alert(`로드 실패: ${error.message}`);
+    }
+}
+
+// 회계 기간으로 필터링
+function filterByPeriod(expenses) {
+    const { startDate, endDate } = getCurrentPeriodRange();
+    return expenses.filter(exp => {
+        const [year, month, day] = exp.date.split('-').map(Number);
+        const expDate = new Date(year, month - 1, day);
+        return expDate >= startDate && expDate <= endDate;
+    });
+}
+
+// 달력 렌더링
+async function renderCalendar() {
+    const container = document.getElementById('calendarContainer');
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startingDayOfWeek = firstDay.getDay();
+    const daysInMonth = lastDay.getDate();
+
+    let calendarHTML = `<div class="calendar">
+        <div class="calendar-header-top">
+          <h3>${year}년 ${month + 1}월</h3>
+          <div class="calendar-actions-right">
+            <div class="period-display">기간: ${accountingPeriod.startDay}일 ~ ${accountingPeriod.endDay}일</div>
+            <button class="calendar-settings-btn" onclick="showPeriodModal()">설정</button>
+          </div>
+        </div>
+        <div class="calendar-grid-header">
+            <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+        </div>
+        <div class="calendar-body">`;
+
+    for (let i = 0; i < startingDayOfWeek; i++) {
+        calendarHTML += '<div class="calendar-empty"></div>';
+    }
+
+    let expensesByDate = {};
+    if (currentUser) {
+        const snapshot = await db.collection('users').doc(currentUser.uid).collection('expenses').get();
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (!expensesByDate[data.date]) {
+                expensesByDate[data.date] = 0;
+            }
+            expensesByDate[data.date] += data.amount;
+        });
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const amount = expensesByDate[dateStr] || 0;
+        const amountDisplay = amount > 0 ? `<div class="calendar-amount">₩${amount.toLocaleString()}</div>` : '';
+        calendarHTML += `<div class="calendar-day" data-date="${dateStr}">
+            <div class="date-label">${day}</div>
+            ${amountDisplay}
+          </div>`;
+    }
+
+    calendarHTML += '</div></div>';
+    container.innerHTML = calendarHTML;
+
+    container.querySelectorAll('.calendar-day').forEach(dayElem => {
+        dayElem.addEventListener('click', () => {
+            const dateStr = dayElem.getAttribute('data-date');
+            showDayModal(dateStr);
+        });
+    });
+}
+
+// 모달 외부 클릭 시 닫기
+window.onclick = function(event) {
+    const loginModal = document.getElementById('loginModal');
+    const periodModal = document.getElementById('periodModal');
+    const dayModal = document.getElementById('dayModal');
+
+    if (event.target === loginModal) {
+        closeLoginModal();
+    }
+    if (event.target === periodModal) {
+        closePeriodModal();
+    }
+    if (event.target === dayModal) {
+        closeDayModal();
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderCalendar();
+});
