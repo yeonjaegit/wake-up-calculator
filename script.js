@@ -17,7 +17,8 @@ async function registerFaceId() {
         alert('이 기기는 Face ID를 지원하지 않아요.');
         return;
     }
-    if (!currentUser) { alert('로그인 후 등록할 수 있어요.'); return; }
+    const user = currentUser || auth.currentUser;
+    if (!user) { alert('로그인 후 등록할 수 있어요.'); return; }
     try {
         const challenge = crypto.getRandomValues(new Uint8Array(32));
         const credential = await navigator.credentials.create({
@@ -25,9 +26,9 @@ async function registerFaceId() {
                 challenge,
                 rp: { id: RP_ID, name: '쓰연이 케어 센터' },
                 user: {
-                    id: new TextEncoder().encode(currentUser.uid),
-                    name: currentUser.email || '쓰연이',
-                    displayName: currentUser.displayName || '쓰연이'
+                    id: new TextEncoder().encode(user.uid),
+                    name: user.email || '쓰연이',
+                    displayName: user.displayName || '쓰연이'
                 },
                 pubKeyCredParams: [
                     { alg: -7, type: 'public-key' },
@@ -79,6 +80,17 @@ function fallbackToGoogleLogin() {
     localStorage.removeItem(FACEID_KEY);
     document.getElementById('faceIdLock').style.display = 'none';
     document.querySelector('.container').style.display = 'block';
+}
+
+function showFaceIdPrompt() {
+    const modal = document.getElementById('faceIdPromptModal');
+    modal.style.display = 'flex';
+}
+
+function closeFaceIdPrompt(doRegister) {
+    const modal = document.getElementById('faceIdPromptModal');
+    modal.style.display = 'none';
+    if (doRegister) registerFaceId();
 }
 
 function checkFaceIdOnLoad() {
@@ -720,10 +732,8 @@ function loginWithGoogle() {
             closeLoginModal();
             if (!hasFaceIdRegistered() && isBiometricSupported()) {
                 setTimeout(() => {
-                    if (confirm('Face ID를 등록하시겠어요? \n다음부터 Face ID로 빠르게 접속할 수 있어요!')) {
-                        registerFaceId();
-                    }
-                }, 500);
+                    showFaceIdPrompt();
+                }, 400);
             }
         })
         .catch(error => {
