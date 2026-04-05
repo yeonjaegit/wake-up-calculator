@@ -2,13 +2,14 @@
 // 0. Firebase 초기화
 // ========================================
 const firebaseConfig = {
-  apiKey: "AIzaSyCZYRDqIbmHJjprrUOe8YHtO39lLTvaeAg",
-  authDomain: "soyeon-present.firebaseapp.com",
-  projectId: "soyeon-present",
-  storageBucket: "soyeon-present.firebasestorage.app",
-  messagingSenderId: "842008448776",
-  appId: "1:842008448776:web:b5579525f8ebc93a28e6bd"
+    apiKey: "AIzaSyCZYRDqIbmHJjprrUOe8YHtO39lLTvaeAg",
+    authDomain: "soyeon-present.firebaseapp.com",
+    projectId: "soyeon-present",
+    storageBucket: "soyeon-present.firebasestorage.app",
+    messagingSenderId: "842008448776",
+    appId: "1:842008448776:web:b5579525f8ebc93a28e6bd"
 };
+let currentCalendarDate = new Date();
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -351,25 +352,27 @@ function formatDateForInput(date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-function getCurrentPeriodRange(reference = new Date()) {
-    if (!accountingPeriod.startDay || !accountingPeriod.endDay) {
-        accountingPeriod.startDay = 25;
-        accountingPeriod.endDay = 24;
-    }
-
+function getCurrentPeriodRange() {
     const startDay = accountingPeriod.startDay;
-    const endDay = accountingPeriod.endDay;
-    const year = reference.getFullYear();
-    const month = reference.getMonth();
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
 
     let startDate, endDate;
-    if (reference.getDate() >= startDay) {
+
+    if (today.getDate() >= startDay) {
+        // 오늘이 25일 이후라면: 이번달 25일 ~ 다음달 24일
         startDate = new Date(year, month, startDay);
-        endDate = new Date(year, month + 1, endDay);
+        endDate = new Date(year, month + 1, startDay - 1);
     } else {
+        // 오늘이 25일 전이라면: 저번달 25일 ~ 이번달 24일
         startDate = new Date(year, month - 1, startDay);
-        endDate = new Date(year, month, endDay);
+        endDate = new Date(year, month, startDay - 1);
     }
+
+    // 시간 값을 00:00:00와 23:59:59로 맞춰서 날짜 비교 오류 방지
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
 
     return { startDate, endDate };
 }
@@ -389,8 +392,16 @@ function setDefaultAccountingPeriod() {
 
 function updatePeriodInfoDisplay() {
     const info = document.getElementById('periodInfo');
-    if (!info) return;
-    info.textContent = `${accountingPeriod.startDay}일 ~ ${accountingPeriod.endDay}일`; 
+    const displayArea = document.querySelector('.period-display'); // 달력 상단 표시용
+
+    const start = accountingPeriod.startDay;
+    // 1일이면 말일(31 or 30), 그 외에는 (시작일 - 1)
+    const end = start === 1 ? '말' : start - 1;
+
+    const text = `${start}일 ~ ${end}일`;
+
+    if (info) info.textContent = text;
+    if (displayArea) displayArea.textContent = `기준: ${text}`;
 }
 
 function showPeriodModal() {
@@ -412,24 +423,19 @@ function closePeriodModal() {
 }
 
 function savePeriodSetting() {
-    const startDay = parseInt(document.getElementById('configStartDay').value, 10);
-    const endDay = parseInt(document.getElementById('configEndDay').value, 10);
-
-    if (!startDay || !endDay) {
-        alert('시작일과 종료일을 모두 입력하세요.');
-        return;
-    }
-    if (startDay < 1 || startDay > 31 || endDay < 1 || endDay > 31) {
-        alert('1일부터 31일 사이의 숫자를 입력하세요.');
+    const start = parseInt(document.getElementById('configStartDay').value, 10);
+    if (isNaN(start) || start < 1 || start > 31) {
+        alert("1에서 31 사이의 숫자를 입력해줘!");
         return;
     }
 
-    accountingPeriod.startDay = startDay;
-    accountingPeriod.endDay = endDay;
+    // 시작일 설정 (종료일은 위 display 함수에서 자동 계산됨)
+    accountingPeriod.startDay = start;
+    accountingPeriod.endDay = start === 1 ? 31 : start - 1;
+
     updatePeriodInfoDisplay();
     closePeriodModal();
-    renderCalendar();
-    loadExpenses();
+    loadExpenses(); // 바뀐 기간으로 총합계 다시 계산
 }
 
 // ========================================
@@ -698,33 +704,28 @@ function deleteExpense(expenseId) {
 // 지출 목록 로드
 async function loadExpenses() {
     if (!currentUser) return;
-
     try {
         const snapshot = await db.collection('users').doc(currentUser.uid).collection('expenses').get();
-
-        if (snapshot.empty) {
-            document.getElementById('totalAmount').textContent = '₩0';
-            renderCalendar();
-            return;
-        }
-
-        let expenses = [];
+        let totalForPeriod = 0; // 현재 주기의 총 합계
+        const { startDate, endDate } = getCurrentPeriodRange();
 
         snapshot.forEach(doc => {
             const data = doc.data();
-            expenses.push({ id: doc.id, ...data });
+            const [y, m, d] = data.date.split('-').map(Number);
+            const expDate = new Date(y, m - 1, d);
+
+            // [핵심] 총 지출 집계만 기간 내(3/25 ~ 4/24) 데이터로 제한
+            if (expDate >= startDate && expDate <= endDate) {
+                totalForPeriod += data.amount;
+            }
         });
 
-        if (accountingPeriod.start && accountingPeriod.end) {
-            expenses = filterByPeriod(expenses);
-        }
+        // 화면 상단 '총 지출' 텍스트 업데이트
+        document.getElementById('totalAmount').textContent = `₩${totalForPeriod.toLocaleString()}`;
 
-        const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-        document.getElementById('totalAmount').textContent = `₩${total.toLocaleString()}`;
+        // 달력은 모든 데이터를 다 그리도록 호출
         renderCalendar();
-    } catch (error) {
-        alert(`로드 실패: ${error.message}`);
-    }
+    } catch (e) { console.error(e); }
 }
 
 // 회계 기간으로 필터링
@@ -737,70 +738,106 @@ function filterByPeriod(expenses) {
     });
 }
 
+// 달력 월 이동 함수 (이게 있어야 < > 버튼이 작동함)
+function changeMonth(offset) {
+    // 현재 달력 날짜의 월을 offset만큼 가감
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + offset);
+
+    // 월을 바꾼 후 달력을 다시 그림
+    renderCalendar();
+
+    // [선택사항] 월을 바꿀 때 총 지출 합계도 다시 계산하고 싶다면 아래 주석 해제
+    // loadExpenses(); 
+}
+
 // 달력 렌더링
 async function renderCalendar() {
     const container = document.getElementById('calendarContainer');
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    if (!container) return;
 
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startingDayOfWeek = firstDay.getDay();
-    const daysInMonth = lastDay.getDate();
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
 
-    let calendarHTML = `<div class="calendar">
-        <div class="calendar-header-top">
-          <h3>${year}년 ${month + 1}월</h3>
-          <div class="calendar-actions-right">
-            <div class="period-display">기간: ${accountingPeriod.startDay}일 ~ ${accountingPeriod.endDay}일</div>
-            <button class="calendar-settings-btn" onclick="showPeriodModal()">설정</button>
-          </div>
-        </div>
-        <div class="calendar-grid-header">
-            <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
-        </div>
-        <div class="calendar-body">`;
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    for (let i = 0; i < startingDayOfWeek; i++) {
-        calendarHTML += '<div class="calendar-empty"></div>';
-    }
+    // [계산] 현재 달력 기준 결산 기간 (예: 25일 기준)
+    const startDay = accountingPeriod.startDay;
+    const displayStartDate = new Date(year, month - 1, startDay);
+    const displayEndDate = new Date(year, month, startDay - 1);
+
+    // 기간 텍스트 생성 (디자인 변경 없이 내용만 수정)
+    const periodText = `${displayStartDate.getMonth() + 1}월 ${displayStartDate.getDate()}일 ~ ${displayEndDate.getMonth() + 1}월 ${displayEndDate.getDate()}일`;
 
     let expensesByDate = {};
+    let periodTotal = 0;
+
     if (currentUser) {
         const snapshot = await db.collection('users').doc(currentUser.uid).collection('expenses').get();
         snapshot.forEach(doc => {
             const data = doc.data();
-            if (!expensesByDate[data.date]) {
-                expensesByDate[data.date] = 0;
-            }
+            const [exY, exM, exD] = data.date.split('-').map(Number);
+            const expDate = new Date(exY, exM - 1, exD);
+
+            if (!expensesByDate[data.date]) expensesByDate[data.date] = 0;
             expensesByDate[data.date] += data.amount;
+
+            // 현재 달력의 결산 기간 내 데이터만 합산
+            if (expDate >= displayStartDate && expDate <= displayEndDate) {
+                periodTotal += data.amount;
+            }
         });
     }
+
+    // 상단 총 지출 금액 실시간 업데이트
+    const totalElem = document.getElementById('totalAmount');
+    if (totalElem) totalElem.textContent = `₩${periodTotal.toLocaleString()}`;
+
+    let calendarHTML = `
+        <div class="calendar">
+            <div class="calendar-header-top">
+                <h3>
+                    <button onclick="changeMonth(-1)">◀</button>
+                    ${year}년 ${month + 1}월
+                    <button onclick="changeMonth(1)">▶</button>
+                </h3>
+                <div class="calendar-actions-right">
+                    <div class="period-display">기간: ${periodText}</div>
+                    <button class="calendar-settings-btn" onclick="showPeriodModal()">설정</button>
+                </div>
+            </div>
+            <div class="calendar-grid-header">
+                <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+            </div>
+            <div class="calendar-body">`;
+
+    for (let i = 0; i < firstDay; i++) calendarHTML += '<div class="calendar-empty"></div>';
+
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const amount = expensesByDate[dateStr] || 0;
-        const amountDisplay = amount > 0 ? `<div class="calendar-amount">₩${amount.toLocaleString()}</div>` : '';
-        calendarHTML += `<div class="calendar-day" data-date="${dateStr}">
-            <div class="date-label">${day}</div>
-            ${amountDisplay}
-          </div>`;
+        const isToday = dateStr === todayStr ? 'today' : '';
+
+        calendarHTML += `
+            <div class="calendar-day ${isToday}" data-date="${dateStr}">
+                <div class="date-label">${day}</div>
+                ${amount > 0 ? `<div class="calendar-amount">₩${amount.toLocaleString()}</div>` : ''}
+            </div>`;
     }
 
     calendarHTML += '</div></div>';
     container.innerHTML = calendarHTML;
 
     container.querySelectorAll('.calendar-day').forEach(dayElem => {
-        dayElem.addEventListener('click', () => {
-            const dateStr = dayElem.getAttribute('data-date');
-            showDayModal(dateStr);
-        });
+        dayElem.addEventListener('click', () => showDayModal(dayElem.getAttribute('data-date')));
     });
 }
 
 // 모달 외부 클릭 시 닫기
-window.onclick = function(event) {
+window.onclick = function (event) {
     const loginModal = document.getElementById('loginModal');
     const periodModal = document.getElementById('periodModal');
     const dayModal = document.getElementById('dayModal');

@@ -86,9 +86,35 @@ body {
 }
 
 .calendar-header-top h3 {
+  position: relative;
   margin: 0;
   font-size: 1.2em;
   color: #ff7eae;
+  text-align: center;
+  flex: none;
+  padding-left: 45px;
+}
+
+/* 왼쪽 버튼 */
+.calendar-header-top h3 button:first-child {
+  left: 15px;
+}
+
+/* 오른쪽 버튼 */
+.calendar-header-top h3 button:last-child {
+  right: -30px;
+}
+
+/* 버튼 공통 */
+.calendar-header-top h3 button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #ff9bb3;
 }
 
 .calendar-actions-right {
@@ -743,4 +769,10 @@ button#calculateBtn {
   .tab-btn { padding: 8px 12px; font-size: 0.8em; }
   .expense-item { flex-wrap: wrap; }
   .total-amount { font-size: 1.6em; }
+}
+
+.today {
+    border: 1.5px solid #ff9bb3;   /* 연한 핑크 */
+    background-color: #fff7fa;     /* 아주 연한 핑크 */
+    font-weight: 600;
 }
