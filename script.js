@@ -354,34 +354,17 @@ function formatDateForInput(date) {
 
 function getCurrentPeriodRange() {
     const startDay = accountingPeriod.startDay;
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
-
-    let startDate, endDate;
-
-    if (today.getDate() >= startDay) {
-        // 오늘이 25일 이후라면: 이번달 25일 ~ 다음달 24일
-        startDate = new Date(year, month, startDay);
-        endDate = new Date(year, month + 1, startDay - 1);
-    } else {
-        // 오늘이 25일 전이라면: 저번달 25일 ~ 이번달 24일
-        startDate = new Date(year, month - 1, startDay);
-        endDate = new Date(year, month, startDay - 1);
-    }
-
-    // 시간 값을 00:00:00와 23:59:59로 맞춰서 날짜 비교 오류 방지
+    const startDate = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth(), startDay);
+    const endDate = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth() + 1, startDay - 1);
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(23, 59, 59, 999);
-
     return { startDate, endDate };
 }
 
 function setDefaultAccountingPeriod() {
     accountingPeriod.startDay = 25;
     accountingPeriod.endDay = 24;
-    updatePeriodInfoDisplay();
-
+    initCurrentPeriodDate();
     const startInput = document.getElementById('configStartDay');
     const endInput = document.getElementById('configEndDay');
     if (startInput && endInput) {
@@ -429,13 +412,12 @@ function savePeriodSetting() {
         return;
     }
 
-    // 시작일 설정 (종료일은 위 display 함수에서 자동 계산됨)
     accountingPeriod.startDay = start;
     accountingPeriod.endDay = start === 1 ? 31 : start - 1;
 
-    updatePeriodInfoDisplay();
+    initCurrentPeriodDate();
     closePeriodModal();
-    loadExpenses(); // 바뀐 기간으로 총합계 다시 계산
+    renderCalendar();
 }
 
 // ========================================
@@ -738,16 +720,34 @@ function filterByPeriod(expenses) {
     });
 }
 
-// 달력 월 이동 함수 (이게 있어야 < > 버튼이 작동함)
-function changeMonth(offset) {
-    // 현재 달력 날짜의 월을 offset만큼 가감
-    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + offset);
+// 금액을 달력 셀에 맞게 압축 포맷 (만 단위)
+function formatCalendarAmount(amount) {
+    if (amount >= 10000) {
+        const man = amount / 10000;
+        return (man % 1 === 0 ? man : man.toFixed(1)) + '만';
+    }
+    return amount.toLocaleString();
+}
 
-    // 월을 바꾼 후 달력을 다시 그림
+// 현재 기간 시작일로 currentCalendarDate 초기화
+function initCurrentPeriodDate() {
+    const today = new Date();
+    const startDay = accountingPeriod.startDay;
+    if (today.getDate() >= startDay) {
+        currentCalendarDate = new Date(today.getFullYear(), today.getMonth(), startDay);
+    } else {
+        currentCalendarDate = new Date(today.getFullYear(), today.getMonth() - 1, startDay);
+    }
+}
+
+// 기간 이동 함수 (< > 버튼)
+function changePeriod(offset) {
+    currentCalendarDate = new Date(
+        currentCalendarDate.getFullYear(),
+        currentCalendarDate.getMonth() + offset,
+        accountingPeriod.startDay
+    );
     renderCalendar();
-
-    // [선택사항] 월을 바꿀 때 총 지출 합계도 다시 계산하고 싶다면 아래 주석 해제
-    // loadExpenses(); 
 }
 
 // 달력 렌더링
@@ -755,19 +755,18 @@ async function renderCalendar() {
     const container = document.getElementById('calendarContainer');
     if (!container) return;
 
-    const year = currentCalendarDate.getFullYear();
-    const month = currentCalendarDate.getMonth();
-
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    // [계산] 현재 달력 기준 결산 기간 (예: 25일 기준)
     const startDay = accountingPeriod.startDay;
-    const displayStartDate = new Date(year, month - 1, startDay);
-    const displayEndDate = new Date(year, month, startDay - 1);
+    const periodStart = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth(), startDay);
+    const periodEnd = new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, startDay - 1);
 
-    // 기간 텍스트 생성 (디자인 변경 없이 내용만 수정)
-    const periodText = `${displayStartDate.getMonth() + 1}월 ${displayStartDate.getDate()}일 ~ ${displayEndDate.getMonth() + 1}월 ${displayEndDate.getDate()}일`;
+    // 헤더 기간 텍스트
+    const psM = periodStart.getMonth() + 1;
+    const psD = periodStart.getDate();
+    const peM = periodEnd.getMonth() + 1;
+    const peD = periodEnd.getDate();
+    const headerText = periodStart.getFullYear() === periodEnd.getFullYear()
+        ? `${periodStart.getFullYear()}년 ${psM}월 ${psD}일 ~ ${peM}월 ${peD}일`
+        : `${periodStart.getFullYear()}년 ${psM}월 ${psD}일 ~ ${periodEnd.getFullYear()}년 ${peM}월 ${peD}일`;
 
     let expensesByDate = {};
     let periodTotal = 0;
@@ -778,32 +777,29 @@ async function renderCalendar() {
             const data = doc.data();
             const [exY, exM, exD] = data.date.split('-').map(Number);
             const expDate = new Date(exY, exM - 1, exD);
-
             if (!expensesByDate[data.date]) expensesByDate[data.date] = 0;
             expensesByDate[data.date] += data.amount;
-
-            // 현재 달력의 결산 기간 내 데이터만 합산
-            if (expDate >= displayStartDate && expDate <= displayEndDate) {
+            if (expDate >= periodStart && expDate <= periodEnd) {
                 periodTotal += data.amount;
             }
         });
     }
 
-    // 상단 총 지출 금액 실시간 업데이트
     const totalElem = document.getElementById('totalAmount');
     if (totalElem) totalElem.textContent = `₩${periodTotal.toLocaleString()}`;
+
+    const startDayOfWeek = periodStart.getDay();
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     let calendarHTML = `
         <div class="calendar">
             <div class="calendar-header-top">
-                <div class="month-nav">
-                    <button class="month-btn" onclick="changeMonth(-1)">‹</button>
-                    <span class="month-title">${year}년 ${month + 1}월</span>
-                    <button class="month-btn" onclick="changeMonth(1)">›</button>
-                </div>
-                <div class="calendar-actions-right">
-                    <div class="period-display">${periodText.replace(' ~ ', ' ~<br>')}</div>
+                <button class="month-btn" onclick="changePeriod(-1)">‹</button>
+                <span class="period-title">${headerText}</span>
+                <div class="header-right-btns">
                     <button class="calendar-settings-btn" onclick="showPeriodModal()">✏️</button>
+                    <button class="month-btn" onclick="changePeriod(1)">›</button>
                 </div>
             </div>
             <div class="calendar-grid-header">
@@ -811,24 +807,25 @@ async function renderCalendar() {
             </div>
             <div class="calendar-body">`;
 
-    for (let i = 0; i < firstDay; i++) calendarHTML += '<div class="calendar-empty"></div>';
+    for (let i = 0; i < startDayOfWeek; i++) calendarHTML += '<div class="calendar-empty"></div>';
 
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    let d = new Date(periodStart);
+    while (d <= periodEnd) {
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         const amount = expensesByDate[dateStr] || 0;
-        const dayOfWeek = (firstDay + day - 1) % 7;
+        const dayOfWeek = d.getDay();
         const weekClass = dayOfWeek === 0 ? 'sunday' : dayOfWeek === 6 ? 'saturday' : '';
         const isToday = dateStr === todayStr ? 'today' : '';
         const classes = ['calendar-day', isToday, weekClass].filter(Boolean).join(' ');
+        const dayNum = d.getDate();
 
         calendarHTML += `
             <div class="${classes}" data-date="${dateStr}">
-                <div class="date-label">${day}</div>
-                ${amount > 0 ? `<div class="calendar-amount">₩${amount.toLocaleString()}</div>` : ''}
+                ${dayNum === 1 ? `<div class="month-mini">${d.getMonth() + 1}월</div>` : ''}
+                <div class="date-label">${dayNum}</div>
+                ${amount > 0 ? `<div class="calendar-amount">${formatCalendarAmount(amount)}</div>` : ''}
             </div>`;
+        d.setDate(d.getDate() + 1);
     }
 
     calendarHTML += '</div></div>';
