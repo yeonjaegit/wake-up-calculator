@@ -471,7 +471,7 @@ function showDayModal(dateStr) {
     document.getElementById('dayExpenseAmount').value = '';
     document.getElementById('dayExpenseMemo').value = '';
     document.getElementById('dayExpensePayment').value = '';
-    document.getElementById('saveExpenseBtn').textContent = '저장';
+    document.getElementById('saveExpenseBtn').textContent = '저장 !!';
     document.getElementById('cancelEditBtn').style.display = 'none';
     loadDayExpenses(dateStr);
     document.getElementById('dayModal').style.display = 'block';
@@ -573,7 +573,7 @@ function startEditExpense(id, category, amount, memo, payment) {
     document.getElementById('dayExpenseAmount').value = amount;
     document.getElementById('dayExpenseMemo').value = memo;
     document.getElementById('dayExpensePayment').value = payment || '';
-    document.getElementById('saveExpenseBtn').textContent = '수정 후 저장!!';
+    document.getElementById('saveExpenseBtn').textContent = '수정 후 저장 !!';
     document.getElementById('cancelEditBtn').style.display = 'block';
     document.getElementById('dayExpenseCategory').focus();
     document.getElementById('dayExpenseCategory').scrollIntoView({ behavior: 'smooth', block: 'center' });
