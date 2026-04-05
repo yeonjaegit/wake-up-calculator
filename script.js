@@ -39,7 +39,7 @@ async function registerFaceId() {
                 ],
                 authenticatorSelection: {
                     authenticatorAttachment: 'platform',
-                    userVerification: 'required'
+                    userVerification: 'preferred'
                 },
                 timeout: 60000
             }
@@ -52,8 +52,7 @@ async function registerFaceId() {
         if (promptModal) promptModal.style.display = 'none';
         const faceBtn = document.getElementById('faceIdRegisterBtn');
         if (faceBtn) { faceBtn.textContent = '✅ Face ID 등록됨'; faceBtn.disabled = true; }
-        alert('Face ID 등록 완료! 다음부터 Face ID로 빠르게 접속할 수 있어요!');
-    } catch (e) {
+        alert('Face ID 등록 완료! 다음부터 Face ID로 빠르게 접속할 수 있어요!');    } catch (e) {
         alert('Face ID 오류: ' + e.name + '\n' + e.message);
     }
 }
@@ -562,6 +561,20 @@ function updateAuthUI() {
     if (currentUser) {
         authStatus.style.display = 'none';
         if (expenseForm) expenseForm.style.display = 'block';
+        const faceWrap = document.getElementById('faceIdRegisterWrap');
+        if (faceBtn && faceWrap) {
+            if (!hasFaceIdRegistered() && isBiometricSupported()) {
+                faceWrap.style.display = 'block';
+                faceBtn.textContent = 'Face ID 등록';
+                faceBtn.disabled = false;
+            } else if (hasFaceIdRegistered()) {
+                faceWrap.style.display = 'block';
+                faceBtn.textContent = '✅ Face ID 등록됨';
+                faceBtn.disabled = true;
+            } else {
+                faceWrap.style.display = 'none';
+            }
+        }
         loadExpenses();
     } else {
         authStatus.style.display = 'flex';
@@ -736,11 +749,6 @@ function loginWithGoogle() {
     auth.signInWithPopup(provider)
         .then(() => {
             closeLoginModal();
-            if (!hasFaceIdRegistered() && isBiometricSupported()) {
-                setTimeout(() => {
-                    showFaceIdPrompt();
-                }, 400);
-            }
         })
         .catch(error => {
             closeLoginModal();
