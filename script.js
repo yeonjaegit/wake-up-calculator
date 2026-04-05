@@ -542,7 +542,7 @@ function addExpenseForSelectedDay() {
         return;
     }
     if (!payment) {
-        alert('지출 방식 선택해조 !!');
+        alert('지출수단 선택해조 !!');
         return;
     }
 
