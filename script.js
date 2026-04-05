@@ -535,6 +535,7 @@ function addExpenseForSelectedDay() {
     const category = document.getElementById('dayExpenseCategory').value.trim();
     const amount = parseInt(document.getElementById('dayExpenseAmount').value, 10);
     const memo = document.getElementById('dayExpenseMemo').value.trim();
+    const payment = document.getElementById('dayExpensePayment').value;
 
     if (!category || !amount || amount <= 0) {
         alert('카테고리와 금액을 모두 입력하세요.');
@@ -545,7 +546,7 @@ function addExpenseForSelectedDay() {
         // 수정 모드
         db.collection('users').doc(currentUser.uid).collection('expenses')
             .doc(currentEditingExpenseId)
-            .update({ category, amount, memo })
+            .update({ category, amount, memo, payment })
             .then(() => {
                 cancelEdit();
                 loadDayExpenses(currentSelectedDate);
@@ -557,7 +558,7 @@ function addExpenseForSelectedDay() {
         if (!currentSelectedDate) { alert('날짜를 선택해주세요.'); return; }
         db.collection('users').doc(currentUser.uid).collection('expenses').add({
             date: currentSelectedDate,
-            category, amount, memo,
+            category, amount, memo, payment,
             timestamp: new Date()
         })
         .then(() => {

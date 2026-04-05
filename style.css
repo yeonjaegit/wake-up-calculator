@@ -315,8 +315,8 @@ body {
   font-weight: 700;
   color: #5a3fa0;
 }
-.payment-row { background: #fff0f8; }
-.payment-row .category-row-name { color: #9040a0; }
+.payment-row { background: #f0ebff; }
+.payment-row .category-row-name { color: #5a3fa0; }
 .payment-row .category-row-amount { color: #c04090; }
 
 .category-row-amount {
