@@ -539,25 +539,18 @@ function updateAuthUI() {
     const logoutBtn = document.getElementById('logoutBtn');
     const userInfo = document.getElementById('userInfo');
     const expenseForm = document.querySelector('.expense-form');
+    const faceBtn = document.getElementById('faceIdRegisterBtn');
 
     if (currentUser) {
         authStatus.style.display = 'none';
         if (expenseForm) expenseForm.style.display = 'block';
-        // Face ID 등록 버튼
-        const faceBtn = document.getElementById('faceIdRegisterBtn');
-        if (faceBtn) {
-            if (hasFaceIdRegistered()) {
-                faceBtn.textContent = '✅ Face ID 등록됨';
-                faceBtn.disabled = true;
-            }
-            faceBtn.style.display = 'inline-block';
-        }
         loadExpenses();
     } else {
         authStatus.style.display = 'flex';
         loginBtn.style.display = 'inline';
         logoutBtn.style.display = 'none';
         userInfo.style.display = 'none';
+        if (faceBtn) faceBtn.style.display = 'none';
         if (expenseForm) expenseForm.style.display = 'none';
         document.getElementById('totalAmount').textContent = '0';
         const pb = document.getElementById('paymentBreakdown'); if (pb) pb.innerHTML = '';
@@ -725,7 +718,13 @@ function loginWithGoogle() {
     auth.signInWithPopup(provider)
         .then(() => {
             closeLoginModal();
-            alert('Google 로그인 성공!');
+            if (!hasFaceIdRegistered() && isBiometricSupported()) {
+                setTimeout(() => {
+                    if (confirm('Face ID를 등록하시겠어요? \n다음부터 Face ID로 빠르게 접속할 수 있어요!')) {
+                        registerFaceId();
+                    }
+                }, 500);
+            }
         })
         .catch(error => {
             closeLoginModal();
