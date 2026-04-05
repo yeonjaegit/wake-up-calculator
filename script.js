@@ -13,44 +13,53 @@ function isBiometricSupported() {
 }
 
 async function registerFaceId() {
-    if (!isBiometricSupported()) {
-        alert('이 기기는 Face ID를 지원하지 않아요.');
+    if (!window.PublicKeyCredential) {
+        alert('이 브라우저는 Face ID를 지원하지 않아요.');
         return;
     }
-    const user = currentUser || auth.currentUser;
-    if (!user) { alert('로그인 후 등록할 수 있어요.'); return; }
+    const user = (typeof auth !== 'undefined' && auth.currentUser) || currentUser;
+    if (!user) {
+        alert('로그인 정보를 찾을 수 없어요. 다시 로그인해 주세요.');
+        return;
+    }
     try {
+        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (!available) {
+            alert('Face ID / 생체인증을 사용할 수 없는 기기예요.');
+            return;
+        }
         const challenge = crypto.getRandomValues(new Uint8Array(32));
+        const userIdBytes = new TextEncoder().encode(user.uid);
         const credential = await navigator.credentials.create({
             publicKey: {
                 challenge,
-                rp: { id: RP_ID, name: '쓰연이 케어 센터' },
+                rp: { name: '쓰연이 케어 센터' },
                 user: {
-                    id: new TextEncoder().encode(user.uid),
+                    id: userIdBytes,
                     name: user.email || '쓰연이',
                     displayName: user.displayName || '쓰연이'
                 },
                 pubKeyCredParams: [
-                    { alg: -7, type: 'public-key' },
-                    { alg: -257, type: 'public-key' }
+                    { alg: -7, type: 'public-key' }
                 ],
                 authenticatorSelection: {
                     authenticatorAttachment: 'platform',
-                    userVerification: 'required',
-                    residentKey: 'preferred'
+                    userVerification: 'required'
                 },
                 timeout: 60000
             }
         });
-        const credId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+        if (!credential) { alert('인증 객체를 받지 못했어요.'); return; }
+        const rawIdArr = new Uint8Array(credential.rawId);
+        const credId = btoa(rawIdArr.reduce((s, b) => s + String.fromCharCode(b), ''));
         localStorage.setItem(FACEID_KEY, credId);
-        const faceBtn = document.getElementById('faceIdRegisterBtn');
-        if (faceBtn) { faceBtn.textContent = '✅ Face ID 등록됨'; faceBtn.disabled = true; }
         const promptModal = document.getElementById('faceIdPromptModal');
         if (promptModal) promptModal.style.display = 'none';
+        const faceBtn = document.getElementById('faceIdRegisterBtn');
+        if (faceBtn) { faceBtn.textContent = '✅ Face ID 등록됨'; faceBtn.disabled = true; }
         alert('Face ID 등록 완료! 다음부터 Face ID로 빠르게 접속할 수 있어요!');
     } catch (e) {
-        alert('Face ID 등록 실패: ' + e.name + ' / ' + e.message);
+        alert('Face ID 오류: ' + e.name + '\n' + e.message);
     }
 }
 
