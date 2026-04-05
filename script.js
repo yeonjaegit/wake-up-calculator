@@ -44,11 +44,13 @@ async function registerFaceId() {
         });
         const credId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
         localStorage.setItem(FACEID_KEY, credId);
-        document.getElementById('faceIdRegisterBtn').textContent = '✅ Face ID 등록됨';
-        document.getElementById('faceIdRegisterBtn').disabled = true;
-        alert('Face ID 등록 완료! 다음부터 Face ID로 빠르게 접속할 수 있어요 🔐');
+        const faceBtn = document.getElementById('faceIdRegisterBtn');
+        if (faceBtn) { faceBtn.textContent = '✅ Face ID 등록됨'; faceBtn.disabled = true; }
+        const promptModal = document.getElementById('faceIdPromptModal');
+        if (promptModal) promptModal.style.display = 'none';
+        alert('Face ID 등록 완료! 다음부터 Face ID로 빠르게 접속할 수 있어요!');
     } catch (e) {
-        if (e.name !== 'NotAllowedError') alert('Face ID 등록 실패: ' + e.message);
+        alert('Face ID 등록 실패: ' + e.name + ' / ' + e.message);
     }
 }
 

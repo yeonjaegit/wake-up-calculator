@@ -145,10 +145,9 @@
   <!-- Face ID 등록 프롬프트 모달 -->
   <div id="faceIdPromptModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(92,63,160,0.35);z-index:99999;display:none;align-items:center;justify-content:center;">
     <div style="background:#fff;border-radius:20px;padding:36px 28px;max-width:320px;width:88%;text-align:center;box-shadow:0 8px 32px rgba(92,63,160,0.18);">
-      <div style="font-size:52px;margin-bottom:10px;">🔐</div>
       <h2 style="font-family:'Jua',sans-serif;color:#5a3fa0;margin:0 0 8px;">Face ID 등록할까요?</h2>
       <p style="color:#9070c0;font-size:13px;margin:0 0 24px;">다음부터 Face ID로 빠르게 접속할 수 있어요!</p>
-      <button onclick="closeFaceIdPrompt(true)" style="display:block;width:100%;padding:13px;background:#7c5cbf;color:#fff;border:none;border-radius:12px;font-family:'Jua',sans-serif;font-size:16px;cursor:pointer;margin-bottom:10px;">등록하기</button>
+      <button onclick="registerFaceId()" style="display:block;width:100%;padding:13px;background:#7c5cbf;color:#fff;border:none;border-radius:12px;font-family:'Jua',sans-serif;font-size:16px;cursor:pointer;margin-bottom:10px;">등록하기</button>
       <button onclick="closeFaceIdPrompt(false)" style="display:block;width:100%;padding:13px;background:#ede6ff;color:#5a3fa0;border:none;border-radius:12px;font-family:'Jua',sans-serif;font-size:15px;cursor:pointer;">나중에</button>
     </div>
   </div>
