@@ -456,6 +456,7 @@ function updateAuthUI() {
         userInfo.style.display = 'none';
         if (expenseForm) expenseForm.style.display = 'none';
         document.getElementById('totalAmount').textContent = '0';
+        const pb = document.getElementById('paymentBreakdown'); if (pb) pb.innerHTML = '';
     }
 }
 
@@ -796,6 +797,7 @@ async function renderCalendar() {
     let expensesByDate = {};
     let periodTotal = 0;
     let categoryTotals = {};
+    let paymentTotals = {};
 
     if (currentUser) {
         const snapshot = await db.collection('users').doc(currentUser.uid).collection('expenses').get();
@@ -809,6 +811,8 @@ async function renderCalendar() {
                 periodTotal += data.amount;
                 const cat = data.category || '기타';
                 categoryTotals[cat] = (categoryTotals[cat] || 0) + data.amount;
+                const pay = data.payment || '기타';
+                paymentTotals[pay] = (paymentTotals[pay] || 0) + data.amount;
             }
         });
     }
@@ -826,6 +830,27 @@ async function renderCalendar() {
             breakdownElem.innerHTML = sorted.map(([cat, amt]) => `
                 <div class="category-row">
                     <span class="category-row-name">${cat}</span>
+                    <span class="category-row-amount">-${amt.toLocaleString()}</span>
+                </div>
+            `).join('');
+        }
+    }
+
+    // 결제방식별 분류 렌더링
+    const paymentElem = document.getElementById('paymentBreakdown');
+    if (paymentElem) {
+        if (Object.keys(paymentTotals).length === 0) {
+            paymentElem.innerHTML = '';
+        } else {
+            const payOrder = ['현금', '체크카드', '신용카드', '기타'];
+            const sorted = Object.entries(paymentTotals).sort((a, b) => {
+                const ai = payOrder.indexOf(a[0]) === -1 ? 99 : payOrder.indexOf(a[0]);
+                const bi = payOrder.indexOf(b[0]) === -1 ? 99 : payOrder.indexOf(b[0]);
+                return ai - bi;
+            });
+            paymentElem.innerHTML = sorted.map(([pay, amt]) => `
+                <div class="category-row payment-row">
+                    <span class="category-row-name">${pay}</span>
                     <span class="category-row-amount">-${amt.toLocaleString()}</span>
                 </div>
             `).join('');
