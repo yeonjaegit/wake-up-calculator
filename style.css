@@ -288,6 +288,38 @@ body {
 .total-label { font-size: 13px; color: #a090c8; font-weight: 600; }
 .total-amount { font-size: 17px; font-weight: 800; color: #c04090; }
 
+/* 카테고리별 지출 */
+.category-breakdown {
+  background: #fff;
+  border-radius: 18px;
+  margin: 0 12px 14px;
+  padding: 4px 6px;
+  box-shadow: 0 2px 10px rgba(124,92,191,0.08);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.category-breakdown:empty { display: none; }
+
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #f0ebff;
+  border-radius: 20px;
+  padding: 5px 12px;
+}
+.category-row-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #5a3fa0;
+}
+.category-row-amount {
+  font-size: 12px;
+  font-weight: 800;
+  color: #c04090;
+}
+
 /* 모달 - 하단 시트 */
 .modal {
   position: fixed; z-index: 1000;

@@ -792,6 +792,7 @@ async function renderCalendar() {
 
     let expensesByDate = {};
     let periodTotal = 0;
+    let categoryTotals = {};
 
     if (currentUser) {
         const snapshot = await db.collection('users').doc(currentUser.uid).collection('expenses').get();
@@ -803,12 +804,30 @@ async function renderCalendar() {
             expensesByDate[data.date] += data.amount;
             if (expDate >= periodStart && expDate <= periodEnd) {
                 periodTotal += data.amount;
+                const cat = data.category || '기타';
+                categoryTotals[cat] = (categoryTotals[cat] || 0) + data.amount;
             }
         });
     }
 
     const totalElem = document.getElementById('totalAmount');
     if (totalElem) totalElem.textContent = periodTotal > 0 ? `-${periodTotal.toLocaleString()}` : '0';
+
+    // 카테고리별 분류 렌더링
+    const breakdownElem = document.getElementById('categoryBreakdown');
+    if (breakdownElem) {
+        if (Object.keys(categoryTotals).length === 0) {
+            breakdownElem.innerHTML = '';
+        } else {
+            const sorted = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
+            breakdownElem.innerHTML = sorted.map(([cat, amt]) => `
+                <div class="category-row">
+                    <span class="category-row-name">${cat}</span>
+                    <span class="category-row-amount">-${amt.toLocaleString()}</span>
+                </div>
+            `).join('');
+        }
+    }
 
     const startDayOfWeek = periodStart.getDay();
     const today = new Date();
