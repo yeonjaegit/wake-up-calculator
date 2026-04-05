@@ -721,14 +721,6 @@ function filterByPeriod(expenses) {
 }
 
 // 금액을 달력 셀에 맞게 압축 포맷 (만 단위)
-function formatCalendarAmount(amount) {
-    if (amount >= 10000) {
-        const man = amount / 10000;
-        return (man % 1 === 0 ? man : man.toFixed(1)) + '만';
-    }
-    return amount.toLocaleString();
-}
-
 // 현재 기간 시작일로 currentCalendarDate 초기화
 function initCurrentPeriodDate() {
     const today = new Date();
@@ -786,7 +778,7 @@ async function renderCalendar() {
     }
 
     const totalElem = document.getElementById('totalAmount');
-    if (totalElem) totalElem.textContent = `₩${periodTotal.toLocaleString()}`;
+    if (totalElem) totalElem.textContent = periodTotal > 0 ? `-₩${periodTotal.toLocaleString()}` : '₩0';
 
     const startDayOfWeek = periodStart.getDay();
     const today = new Date();
@@ -797,10 +789,8 @@ async function renderCalendar() {
             <div class="calendar-header-top">
                 <button class="month-btn" onclick="changePeriod(-1)">‹</button>
                 <span class="period-title">${headerText}</span>
-                <div class="header-right-btns">
-                    <button class="calendar-settings-btn" onclick="showPeriodModal()">✏️</button>
-                    <button class="month-btn" onclick="changePeriod(1)">›</button>
-                </div>
+                <button class="calendar-settings-btn" onclick="showPeriodModal()">✏️</button>
+                <button class="month-btn" onclick="changePeriod(1)">›</button>
             </div>
             <div class="calendar-grid-header">
                 <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
@@ -823,7 +813,7 @@ async function renderCalendar() {
             <div class="${classes}" data-date="${dateStr}">
                 ${dayNum === 1 ? `<div class="month-mini">${d.getMonth() + 1}월</div>` : ''}
                 <div class="date-label">${dayNum}</div>
-                ${amount > 0 ? `<div class="calendar-amount">${formatCalendarAmount(amount)}</div>` : ''}
+                ${amount > 0 ? `<div class="calendar-amount">-${amount.toLocaleString()}</div>` : ''}
             </div>`;
         d.setDate(d.getDate() + 1);
     }

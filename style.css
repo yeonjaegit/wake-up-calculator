@@ -106,41 +106,38 @@ body {
   padding: 0;
 }
 
-/* 달력 헤더 */
 .calendar-header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 10px 8px;
+  padding: 10px 8px 8px;
   background: #fff;
+  gap: 4px;
 }
 
 .period-title {
   flex: 1;
   text-align: center;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 800;
   color: #5a3fa0;
   letter-spacing: -0.3px;
   line-height: 1.3;
-  padding: 0 4px;
 }
 
 .month-btn {
-  background: #ede7f6;
+  background: none;
   border: none;
-  font-size: 18px;
-  color: #7c5cbf;
+  font-size: 17px;
+  color: #9070c0;
   cursor: pointer;
-  width: 28px; height: 28px;
+  width: 22px; height: 22px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   -webkit-tap-highlight-color: transparent;
   padding: 0; line-height: 1;
   flex-shrink: 0;
 }
-
-.header-right-btns { display: flex; align-items: center; gap: 4px; }
 
 .calendar-settings-btn {
   background: #ede7f6;
