@@ -23,11 +23,6 @@ async function registerFaceId() {
         return;
     }
     try {
-        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        if (!available) {
-            alert('Face ID / 생체인증을 사용할 수 없는 기기예요.');
-            return;
-        }
         const challenge = crypto.getRandomValues(new Uint8Array(32));
         const userIdBytes = new TextEncoder().encode(user.uid);
         const credential = await navigator.credentials.create({
