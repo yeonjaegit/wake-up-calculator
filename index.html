@@ -82,7 +82,13 @@
           <div class="login-options">
             <input type="text" id="dayExpenseCategory" class="login-input" placeholder="카테고리">
             <input type="number" id="dayExpenseAmount" class="login-input" placeholder="금액">
-            <textarea id="dayExpenseMemo" class="login-input" placeholder="메모" rows="3"></textarea>
+            <select id="dayExpensePayment" class="login-input">
+              <option value="">-- 결제수단 선택 --</option>
+              <option value="현금">현금</option>
+              <option value="체크카드">체크카드</option>
+              <option value="신용카드">신용카드</option>
+            </select>
+            <textarea id="dayExpenseMemo" class="login-input" placeholder="메모" rows="2"></textarea>
             <button id="saveExpenseBtn" onclick="addExpenseForSelectedDay()" class="login-btn email-btn">저장</button>
             <button id="cancelEditBtn" onclick="cancelEdit()" class="login-btn" style="display:none;background:#d8c8f5;color:#5a3fa0;">취소</button>
           </div>
@@ -101,11 +107,13 @@
         </div>
       </div>
 
-      <div class="total-display">
-        <span class="total-label">총 지출액:</span>
-        <span id="totalAmount" class="total-amount">₩0</span>
+      <div class="summary-box">
+        <div class="summary-total-row">
+          <span class="total-label">총 지출액</span>
+          <span id="totalAmount" class="total-amount">0</span>
+        </div>
+        <div id="categoryBreakdown" class="category-breakdown"></div>
       </div>
-      <div id="categoryBreakdown" class="category-breakdown"></div>
 
     </div>
   </div>

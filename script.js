@@ -470,6 +470,7 @@ function showDayModal(dateStr) {
     document.getElementById('dayExpenseCategory').value = '';
     document.getElementById('dayExpenseAmount').value = '';
     document.getElementById('dayExpenseMemo').value = '';
+    document.getElementById('dayExpensePayment').value = '';
     document.getElementById('saveExpenseBtn').textContent = '저장';
     document.getElementById('cancelEditBtn').style.display = 'none';
     loadDayExpenses(dateStr);
@@ -505,14 +506,14 @@ async function loadDayExpenses(dateStr) {
 
         listContainer.innerHTML = dayExpenses.map(exp => `
             <div class="day-expense-item">
-              <div>
-                <div class="expense-category">${exp.category}</div>
+              <div class="expense-left">
+                <div class="expense-category">${exp.category}${exp.payment ? ` <span class="expense-payment">${exp.payment}</span>` : ''}</div>
                 ${exp.memo ? `<div class="expense-memo">${exp.memo}</div>` : ''}
               </div>
               <div class="day-expense-right">
                 <div class="expense-amount">-${exp.amount.toLocaleString()}</div>
                 <button onclick="startEditExpense('${exp.id}','${exp.category.replace(/'/g,"\\'")}',${
-                  exp.amount},'${(exp.memo||'').replace(/'/g,"\\'")}')"
+                  exp.amount},'${(exp.memo||'').replace(/'/g,"\\'")}','${(exp.payment||'').replace(/'/g,"\\'")}')"
                   class="small-edit-btn">✏️</button>
                 <button onclick="deleteExpense('${exp.id}')" class="delete-btn small-delete-btn">✕</button>
               </div>
@@ -566,11 +567,12 @@ function addExpenseForSelectedDay() {
     }
 }
 
-function startEditExpense(id, category, amount, memo) {
+function startEditExpense(id, category, amount, memo, payment) {
     currentEditingExpenseId = id;
     document.getElementById('dayExpenseCategory').value = category;
     document.getElementById('dayExpenseAmount').value = amount;
     document.getElementById('dayExpenseMemo').value = memo;
+    document.getElementById('dayExpensePayment').value = payment || '';
     document.getElementById('saveExpenseBtn').textContent = '수정 저장';
     document.getElementById('cancelEditBtn').style.display = 'block';
     document.getElementById('dayExpenseCategory').focus();
@@ -582,6 +584,7 @@ function cancelEdit() {
     document.getElementById('dayExpenseCategory').value = '';
     document.getElementById('dayExpenseAmount').value = '';
     document.getElementById('dayExpenseMemo').value = '';
+    document.getElementById('dayExpensePayment').value = '';
     document.getElementById('saveExpenseBtn').textContent = '저장';
     document.getElementById('cancelEditBtn').style.display = 'none';
 }
