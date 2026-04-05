@@ -93,6 +93,79 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Face ID 잠금화면 */
+#faceIdLock {
+  position: fixed;
+  inset: 0;
+  background: #f0ebff;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.faceid-screen {
+  text-align: center;
+  padding: 40px 32px;
+}
+.faceid-icon {
+  font-size: 72px;
+  margin-bottom: 20px;
+}
+.faceid-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #5a3fa0;
+  font-family: 'Jua', sans-serif;
+  margin-bottom: 8px;
+}
+.faceid-sub {
+  font-size: 14px;
+  color: #9070c0;
+  font-weight: 600;
+  margin-bottom: 32px;
+}
+.faceid-btn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  background: #7c5cbf;
+  color: white;
+  font-size: 17px;
+  font-family: 'Jua', sans-serif;
+  font-weight: 700;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 16px rgba(124,92,191,0.25);
+  -webkit-tap-highlight-color: transparent;
+}
+.faceid-fallback {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  color: #a090c8;
+  font-size: 13px;
+  font-family: 'Jua', sans-serif;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Face ID 등록 버튼 */
+.faceid-register-btn {
+  padding: 5px 12px;
+  font-size: 11px;
+  border-radius: 20px;
+  border: 1.5px solid #d8c8f5;
+  background: #fff;
+  color: #7c5cbf;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
 #userInfo { font-size: 11px; color: #a090c8; }
 
 /* 달력 컨테이너 */
@@ -520,7 +593,8 @@ h1 { font-size: 20px; margin-bottom: 8px; font-weight: 800; color: #5a3fa0; }
   letter-spacing: 2px;
   box-sizing: border-box;
 }
-.input-group input[type="time"]::-webkit-calendar-picker-indicator {
+.input-group input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator {
   display: none;
 }
 

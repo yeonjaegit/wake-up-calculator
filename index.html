@@ -10,7 +10,18 @@
   <link rel="icon" href="https://fav.farm/💋">
 </head>
 <body>
-  <div class="container">
+    <!-- Face ID 잠금화면 -->
+    <div id="faceIdLock" style="display:none;">
+      <div class="faceid-screen">
+        <div class="faceid-icon">🔐</div>
+        <div class="faceid-title">쓰연이 케어 센터</div>
+        <div class="faceid-sub">Face ID로 접속하기</div>
+        <button class="faceid-btn" onclick="authenticateWithFaceId()">Face ID 인증 하기</button>
+        <button class="faceid-fallback" onclick="fallbackToGoogleLogin()">구글 로기인으로 접속</button>
+      </div>
+    </div>
+
+    <div class="container">
     <div id="weatherBox" class="weather-box">
       <div id="weatherInfo">날씨 정보를 불러오는 중...</div>
     </div>
@@ -69,6 +80,7 @@
         <button id="loginBtn" onclick="loginWithGoogle()">로그인</button>
         <span id="userInfo" style="display:none;"></span>
         <button id="logoutBtn" onclick="logout()" style="display:none;">로그아웃</button>
+        <button id="faceIdRegisterBtn" onclick="registerFaceId()" style="display:none;" class="faceid-register-btn">🔐 Face ID 등록</button>
       </div>
 
       <div id="calendarContainer" class="calendar-container"></div>

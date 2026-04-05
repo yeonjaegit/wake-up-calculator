@@ -1,4 +1,97 @@
 // ========================================
+// Face ID (WebAuthn)
+// ========================================
+const FACEID_KEY = 'faceIdCredentialId';
+const RP_ID = location.hostname;
+
+function hasFaceIdRegistered() {
+    return !!localStorage.getItem(FACEID_KEY);
+}
+
+function isBiometricSupported() {
+    return window.PublicKeyCredential !== undefined;
+}
+
+async function registerFaceId() {
+    if (!isBiometricSupported()) {
+        alert('이 기기는 Face ID를 지원하지 않아요.');
+        return;
+    }
+    if (!currentUser) { alert('로그인 후 등록할 수 있어요.'); return; }
+    try {
+        const challenge = crypto.getRandomValues(new Uint8Array(32));
+        const credential = await navigator.credentials.create({
+            publicKey: {
+                challenge,
+                rp: { id: RP_ID, name: '쓰연이 케어 센터' },
+                user: {
+                    id: new TextEncoder().encode(currentUser.uid),
+                    name: currentUser.email || '쓰연이',
+                    displayName: currentUser.displayName || '쓰연이'
+                },
+                pubKeyCredParams: [
+                    { alg: -7, type: 'public-key' },
+                    { alg: -257, type: 'public-key' }
+                ],
+                authenticatorSelection: {
+                    authenticatorAttachment: 'platform',
+                    userVerification: 'required',
+                    residentKey: 'preferred'
+                },
+                timeout: 60000
+            }
+        });
+        const credId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+        localStorage.setItem(FACEID_KEY, credId);
+        document.getElementById('faceIdRegisterBtn').textContent = '✅ Face ID 등록됨';
+        document.getElementById('faceIdRegisterBtn').disabled = true;
+        alert('Face ID 등록 완료! 다음부터 Face ID로 빠르게 접속할 수 있어요 🔐');
+    } catch (e) {
+        if (e.name !== 'NotAllowedError') alert('Face ID 등록 실패: ' + e.message);
+    }
+}
+
+async function authenticateWithFaceId() {
+    const storedId = localStorage.getItem(FACEID_KEY);
+    if (!storedId) return false;
+    try {
+        const challenge = crypto.getRandomValues(new Uint8Array(32));
+        const credIdBytes = Uint8Array.from(atob(storedId), c => c.charCodeAt(0));
+        const assertion = await navigator.credentials.get({
+            publicKey: {
+                challenge,
+                rpId: RP_ID,
+                allowCredentials: [{ id: credIdBytes, type: 'public-key', transports: ['internal'] }],
+                userVerification: 'required',
+                timeout: 60000
+            }
+        });
+        if (assertion) {
+            document.getElementById('faceIdLock').style.display = 'none';
+            document.querySelector('.container').style.display = 'block';
+        }
+    } catch (e) {
+        if (e.name !== 'NotAllowedError') alert('Face ID 인증 실패: ' + e.message);
+    }
+}
+
+function fallbackToGoogleLogin() {
+    localStorage.removeItem(FACEID_KEY);
+    document.getElementById('faceIdLock').style.display = 'none';
+    document.querySelector('.container').style.display = 'block';
+}
+
+function checkFaceIdOnLoad() {
+    if (hasFaceIdRegistered() && isBiometricSupported()) {
+        document.querySelector('.container').style.display = 'none';
+        document.getElementById('faceIdLock').style.display = 'flex';
+        auth.onAuthStateChanged(user => {
+            if (user) authenticateWithFaceId();
+        });
+    }
+}
+
+// ========================================
 // 0. Firebase 초기화
 // ========================================
 const firebaseConfig = {
@@ -14,6 +107,8 @@ let currentCalendarDate = new Date();
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+
+checkFaceIdOnLoad();
 
 // ========================================
 // 1. 응원 문구 리스트 (기존 유지)
@@ -448,6 +543,15 @@ function updateAuthUI() {
     if (currentUser) {
         authStatus.style.display = 'none';
         if (expenseForm) expenseForm.style.display = 'block';
+        // Face ID 등록 버튼
+        const faceBtn = document.getElementById('faceIdRegisterBtn');
+        if (faceBtn) {
+            if (hasFaceIdRegistered()) {
+                faceBtn.textContent = '✅ Face ID 등록됨';
+                faceBtn.disabled = true;
+            }
+            faceBtn.style.display = 'inline-block';
+        }
         loadExpenses();
     } else {
         authStatus.style.display = 'flex';
