@@ -625,11 +625,25 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: none;
 }
 
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 #editDateInput {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   min-width: 0;
+}
+
+#editDateRow {
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 button#calculateBtn {

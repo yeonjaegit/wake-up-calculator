@@ -540,6 +540,7 @@ function savePeriodSetting() {
 let currentUser = null;
 let accountingPeriod = { startDay: null, endDay: null };
 let currentSelectedDate = null;
+let currentSalaryDate = null;
 let currentEditingExpenseId = null;
 
 setDefaultAccountingPeriod();
@@ -568,8 +569,8 @@ function updateAuthUI() {
         logoutBtn.style.display = 'none';
         userInfo.style.display = 'none';
         if (expenseForm) expenseForm.style.display = 'none';
-        document.getElementById('totalAmount').textContent = '0';
-        const pb = document.getElementById('paymentBreakdown'); if (pb) pb.innerHTML = '';
+        document.getElementById('summary1Amount').textContent = '0';
+        const pb = document.getElementById('summary2Breakdown'); if (pb) pb.innerHTML = '';
     }
 }
 
@@ -741,9 +742,127 @@ function switchCalendarMode(mode) {
     calendarMode = mode;
     document.getElementById('modeLedgerBtn').classList.toggle('active', mode === 'ledger');
     document.getElementById('modeSalaryBtn').classList.toggle('active', mode === 'salary');
-    const summaryBoxes = document.querySelectorAll('#ledgerTab .summary-box');
-    summaryBoxes.forEach(b => b.style.display = mode === 'ledger' ? '' : 'none');
     renderCalendar();
+}
+
+// ========================================
+// 월급 달력 기능
+// ========================================
+function calcSalaryNet(category, paymentType, totalAmount, cashAmt) {
+    // 중간 시술자 분대비율 (1~3번은 혼자 시술 -> 비율 1.0)
+    let splitRatio;
+    if (category === '헤어메이크업(헤어만)') splitRatio = 0.4;
+    else if (category === '헤어메이크업(메콝만)') splitRatio = 0.6;
+    else splitRatio = 1.0;
+
+    function applyCard(amt) { return amt * 0.97; }
+    function applyVatAndShop(amt) { return amt * 0.9 * 0.4; }
+
+    if (paymentType === '현금') {
+        return Math.round(applyVatAndShop(totalAmount * splitRatio));
+    } else if (paymentType === '카드') {
+        return Math.round(applyVatAndShop(applyCard(totalAmount) * splitRatio));
+    } else {
+        // 분할: 현금부분만 입력받고, 카드 = 총액 - 현금
+        const cash = cashAmt || 0;
+        const card = totalAmount - cash;
+        const cashNet = Math.round(applyVatAndShop(cash * splitRatio));
+        const cardNet = Math.round(applyVatAndShop(applyCard(card) * splitRatio));
+        return cashNet + cardNet;
+    }
+}
+
+function toggleSalaryPayment(type) {
+    const row = document.getElementById('salarySplitRow');
+    row.style.display = type === '분할' ? 'block' : 'none';
+    if (type !== '분할') {
+        document.getElementById('salaryCashAmt').value = '';
+    }
+}
+
+function showSalaryDayModal(dateStr) {
+    if (!currentUser) { showLoginModal(); return; }
+    currentSalaryDate = dateStr;
+    document.getElementById('salaryDayLabel').textContent = `${dateStr} 수익 내역`;
+    document.getElementById('salaryCategory').value = '';
+    document.getElementById('salaryAmount').value = '';
+    document.getElementById('salaryPaymentType').value = '';
+    document.getElementById('salarySplitRow').style.display = 'none';
+    document.getElementById('salaryCashAmt').value = '';
+    loadSalaryDayEntries(dateStr);
+    document.getElementById('salaryDayModal').style.display = 'flex';
+}
+
+function closeSalaryModal() {
+    document.getElementById('salaryDayModal').style.display = 'none';
+}
+
+async function loadSalaryDayEntries(dateStr) {
+    const listContainer = document.getElementById('salaryDayList');
+    if (!listContainer) return;
+    listContainer.innerHTML = '<p>로딩 중...</p>';
+    try {
+        const snapshot = await db.collection('users').doc(currentUser.uid).collection('salaryEntries')
+            .where('date', '==', dateStr).get();
+        if (snapshot.empty) {
+            document.getElementById('salaryDayGross').textContent = '총 매출: 0원';
+            listContainer.innerHTML = '<p>이 날짜에 등록된 내역이 없어요.</p>';
+            return;
+        }
+        const entries = [];
+        snapshot.forEach(doc => entries.push({ id: doc.id, ...doc.data() }));
+        entries.sort((a, b) => new Date(b.timestamp?.toDate?.() || b.timestamp) - new Date(a.timestamp?.toDate?.() || a.timestamp));
+        const grossTotal = entries.reduce((s, e) => s + e.totalAmount, 0);
+        document.getElementById('salaryDayGross').textContent = `총 매출: ${grossTotal.toLocaleString()}원`;
+        listContainer.innerHTML = entries.map(e => `
+            <div class="day-expense-item">
+              <div class="expense-left">
+                <div class="expense-category">${e.category} <span class="expense-payment">${e.paymentType}</span></div>
+                <div class="expense-memo" style="color:#7c5cbf;font-size:11px;">실수령 +${e.netAmount.toLocaleString()}원</div>
+              </div>
+              <div class="day-expense-right">
+                <div class="expense-amount">${e.totalAmount.toLocaleString()}</div>
+                <button onclick="deleteSalaryEntry('${e.id}')" class="delete-btn small-delete-btn">✕</button>
+              </div>
+            </div>
+        `).join('');
+    } catch (err) {
+        listContainer.innerHTML = `<p>불러오기 실패: ${err.message}</p>`;
+    }
+}
+
+function addSalaryEntry() {
+    if (!currentUser) { alert('로그인이 필요합니다.'); return; }
+    const category = document.getElementById('salaryCategory').value;
+    const totalAmount = parseInt(document.getElementById('salaryAmount').value, 10);
+    const paymentType = document.getElementById('salaryPaymentType').value;
+    const cashAmt = parseInt(document.getElementById('salaryCashAmt').value, 10) || 0;
+    if (!category) { alert('카테고리를 선택해주세요.'); return; }
+    if (!totalAmount || totalAmount <= 0) { alert('금액을 입력해주세요.'); return; }
+    if (!paymentType) { alert('결제 방식을 선택해주세요.'); return; }
+    if (paymentType === '분할') {
+        if (cashAmt <= 0) { alert('현금 금액을 입력해주세요.'); return; }
+        if (cashAmt >= totalAmount) { alert('현금 금액이 총액보다 크거나 같아요.'); return; }
+    }
+    const cardAmt = paymentType === '분할' ? totalAmount - cashAmt : 0;
+    const netAmount = calcSalaryNet(category, paymentType, totalAmount, cashAmt);
+    db.collection('users').doc(currentUser.uid).collection('salaryEntries').add({
+        date: currentSalaryDate,
+        category, totalAmount, paymentType,
+        cashAmount: cashAmt, cardAmount: cardAmt,
+        netAmount,
+        timestamp: new Date()
+    })
+    .then(() => { closeSalaryModal(); renderCalendar(); })
+    .catch(e => alert(`저장 실패: ${e.message}`));
+}
+
+function deleteSalaryEntry(id) {
+    if (!currentUser) return;
+    if (!confirm('삭제할까요?')) return;
+    db.collection('users').doc(currentUser.uid).collection('salaryEntries').doc(id).delete()
+        .then(() => { closeSalaryModal(); renderCalendar(); })
+        .catch(e => alert(`삭제 실패: ${e.message}`));
 }
 
 function toggleInstallmentRow(paymentValue) {
@@ -948,7 +1067,7 @@ async function loadExpenses() {
         });
 
         // 화면 상단 '총 지출' 텍스트 업데이트
-        document.getElementById('totalAmount').textContent = `-${totalForPeriod.toLocaleString()}`;
+        document.getElementById('summary1Amount').textContent = `-${totalForPeriod.toLocaleString()}`;
 
         // 달력은 모든 데이터를 다 그리도록 호출
         renderCalendar();
@@ -1005,75 +1124,99 @@ async function renderCalendar() {
         ? `${periodStart.getFullYear()}년 ${psM}월 ${psD}일 ~ ${peM}월 ${peD}일`
         : `${periodStart.getFullYear()}년 ${psM}월 ${psD}일 ~ ${periodEnd.getFullYear()}년 ${peM}월 ${peD}일`;
 
-    let expensesByDate = {};
+    let amountsByDate = {};
     let periodTotal = 0;
     let categoryTotals = {};
     let paymentTotals = {};
+    let netByPayment = {};
 
-    if (calendarMode === 'salary') {
-        // 월급 달력 틀 - 데이터는 추후 구현
-        const totalElem = document.getElementById('totalAmount');
-        if (totalElem) totalElem.textContent = '0';
-        const breakdownElem = document.getElementById('categoryBreakdown');
-        if (breakdownElem) breakdownElem.innerHTML = '';
-        const paymentElem = document.getElementById('paymentBreakdown');
-        if (paymentElem) paymentElem.innerHTML = '';
-    } else if (currentUser) {
-        const snapshot = await db.collection('users').doc(currentUser.uid).collection('expenses').get();
+    if (currentUser) {
+        const collName = calendarMode === 'salary' ? 'salaryEntries' : 'expenses';
+        const snapshot = await db.collection('users').doc(currentUser.uid).collection(collName).get();
         snapshot.forEach(doc => {
             const data = doc.data();
             const [exY, exM, exD] = data.date.split('-').map(Number);
             const expDate = new Date(exY, exM - 1, exD);
-            if (!expensesByDate[data.date]) expensesByDate[data.date] = 0;
-            expensesByDate[data.date] += data.amount;
+            const val = calendarMode === 'salary' ? (data.netAmount || 0) : (data.amount || 0);
+            const cellVal = calendarMode === 'salary' ? (data.totalAmount || 0) : (data.amount || 0);
+            if (!amountsByDate[data.date]) amountsByDate[data.date] = 0;
+            amountsByDate[data.date] += cellVal;
             if (expDate >= periodStart && expDate <= periodEnd) {
-                periodTotal += data.amount;
+                periodTotal += val;
                 const cat = data.category || '기타';
-                categoryTotals[cat] = (categoryTotals[cat] || 0) + data.amount;
-                const pay = data.payment || '기타';
-                paymentTotals[pay] = (paymentTotals[pay] || 0) + data.amount;
+                categoryTotals[cat] = (categoryTotals[cat] || 0) + val;
+                const pay = (calendarMode === 'salary' ? data.paymentType : data.payment) || '기타';
+                const payAmt = calendarMode === 'salary' ? (data.totalAmount || 0) : val;
+                if (calendarMode === 'salary' && pay === '분할') {
+                    const cash = data.cashAmount || 0;
+                    const card = (data.totalAmount || 0) - cash;
+                    paymentTotals['현금'] = (paymentTotals['현금'] || 0) + cash;
+                    paymentTotals['카드'] = (paymentTotals['카드'] || 0) + card;
+                    const total = data.totalAmount || 0;
+                    const cashFrac = total > 0 ? cash / total : 0;
+                    netByPayment['현금'] = (netByPayment['현금'] || 0) + Math.round(val * cashFrac);
+                    netByPayment['카드'] = (netByPayment['카드'] || 0) + Math.round(val * (1 - cashFrac));
+                } else {
+                    paymentTotals[pay] = (paymentTotals[pay] || 0) + payAmt;
+                    if (calendarMode === 'salary') {
+                        const payKey = (pay === '현금') ? '현금' : '카드';
+                        netByPayment[payKey] = (netByPayment[payKey] || 0) + val;
+                    }
+                }
             }
         });
     }
 
-    const totalElem = document.getElementById('totalAmount');
-    if (totalElem) totalElem.textContent = periodTotal > 0 ? `-${periodTotal.toLocaleString()}` : '0';
+    const s1Label  = document.getElementById('summary1Label');
+    const s1Amount = document.getElementById('summary1Amount');
+    const s1Break  = document.getElementById('summary1Breakdown');
+    const s2Label  = document.getElementById('summary2Label');
+    const s2Amount = document.getElementById('summary2Amount');
+    const s2Break  = document.getElementById('summary2Breakdown');
+    const s3Box    = document.getElementById('summary3Box');
+    const s3Break  = document.getElementById('summary3Breakdown');
 
-    // 카테고리별 분류 렌더링
-    const breakdownElem = document.getElementById('categoryBreakdown');
-    if (breakdownElem) {
-        if (Object.keys(categoryTotals).length === 0) {
-            breakdownElem.innerHTML = '';
-        } else {
-            const sorted = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
-            breakdownElem.innerHTML = sorted.map(([cat, amt]) => `
-                <div class="category-row">
-                    <span class="category-row-name">${cat}</span>
-                    <span class="category-row-amount">-${amt.toLocaleString()}</span>
-                </div>
-            `).join('');
-        }
+    const grossTotal = Object.values(paymentTotals).reduce((s, v) => s + v, 0);
+
+    // 헬퍼 함수
+    function makeCatHTML(totals, sign) {
+        if (Object.keys(totals).length === 0) return '';
+        return Object.entries(totals).sort((a, b) => b[1] - a[1]).map(([k, v]) =>
+            `<div class="category-row"><span class="category-row-name">${k}</span><span class="category-row-amount">${sign}${v.toLocaleString()}</span></div>`
+        ).join('');
+    }
+    function makePayHTML(totals, sign) {
+        if (Object.keys(totals).length === 0) return '';
+        const order = ['현금', '체크카드', '신용카드', '카드', '기타'];
+        return Object.entries(totals).sort((a, b) => {
+            return (order.indexOf(a[0]) + 1 || 99) - (order.indexOf(b[0]) + 1 || 99);
+        }).map(([k, v]) =>
+            `<div class="category-row payment-row"><span class="category-row-name">${k}</span><span class="category-row-amount">${sign}${v.toLocaleString()}</span></div>`
+        ).join('');
     }
 
-    // 결제방식별 분류 렌더링
-    const paymentElem = document.getElementById('paymentBreakdown');
-    if (paymentElem) {
-        if (Object.keys(paymentTotals).length === 0) {
-            paymentElem.innerHTML = '';
-        } else {
-            const payOrder = ['현금', '체크카드', '신용카드', '기타'];
-            const sorted = Object.entries(paymentTotals).sort((a, b) => {
-                const ai = payOrder.indexOf(a[0]) === -1 ? 99 : payOrder.indexOf(a[0]);
-                const bi = payOrder.indexOf(b[0]) === -1 ? 99 : payOrder.indexOf(b[0]);
-                return ai - bi;
-            });
-            paymentElem.innerHTML = sorted.map(([pay, amt]) => `
-                <div class="category-row payment-row">
-                    <span class="category-row-name">${pay}</span>
-                    <span class="category-row-amount">-${amt.toLocaleString()}</span>
-                </div>
-            `).join('');
-        }
+    if (calendarMode === 'salary') {
+        // Box1 = 총 매출 (grossTotal + 결제수단 breakdown)
+        if (s1Label)  s1Label.textContent  = '총 매출';
+        if (s1Amount) { s1Amount.textContent = grossTotal > 0 ? `+${grossTotal.toLocaleString()}` : '0'; s1Amount.style.display = ''; }
+        if (s1Break)  s1Break.innerHTML = makePayHTML(paymentTotals, '+');
+        // Box2 = 총 실수령액 (netTotal + 카테고리 breakdown)
+        if (s2Label)  s2Label.textContent  = '총 실수령액';
+        if (s2Amount) { s2Amount.textContent = periodTotal > 0 ? `+${periodTotal.toLocaleString()}` : '0'; s2Amount.style.display = ''; }
+        if (s2Break)  s2Break.innerHTML = makeCatHTML(categoryTotals, '+');
+        // Box3 = 결제수단별 실수령액
+        if (s3Box) s3Box.style.display = '';
+        if (s3Break) s3Break.innerHTML = makePayHTML(netByPayment, '+');
+    } else {
+        if (s3Box) s3Box.style.display = 'none';
+        // Box1 = 총 지출액 (expenses + 카테고리 breakdown)
+        if (s1Label)  s1Label.textContent  = '총 지출액';
+        if (s1Amount) { s1Amount.textContent = periodTotal > 0 ? `-${periodTotal.toLocaleString()}` : '0'; s1Amount.style.display = ''; }
+        if (s1Break)  s1Break.innerHTML = makeCatHTML(categoryTotals, '-');
+        // Box2 = 지출수단별 지출액
+        if (s2Label)  s2Label.textContent  = '지출수단별 지출액';
+        if (s2Amount) s2Amount.style.display = 'none';
+        if (s2Break)  s2Break.innerHTML = makePayHTML(paymentTotals, '-');
     }
 
     const startDayOfWeek = periodStart.getDay();
@@ -1100,13 +1243,13 @@ async function renderCalendar() {
     let d = new Date(periodStart);
     while (d <= periodEnd) {
         const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        const amount = expensesByDate[dateStr] || 0;
+        const amount = amountsByDate[dateStr] || 0;
         const dayOfWeek = d.getDay();
         const weekClass = dayOfWeek === 0 ? 'sunday' : dayOfWeek === 6 ? 'saturday' : '';
         const isToday = dateStr === todayStr ? 'today' : '';
         const classes = ['calendar-day', isToday, weekClass].filter(Boolean).join(' ');
         const dayNum = d.getDate();
-        const amountStr = amount > 0 ? `-${amount.toLocaleString()}` : '';
+        const amountStr = amount > 0 ? (calendarMode === 'salary' ? `+${amount.toLocaleString()}` : `-${amount.toLocaleString()}`) : '';
         const len = amountStr.length;
         const amountFS = len <= 7 ? '8.5px' : len <= 9 ? '7.5px' : len <= 11 ? '6.5px' : len <= 13 ? '5.5px' : '4.5px';
 
@@ -1123,7 +1266,10 @@ async function renderCalendar() {
     container.innerHTML = calendarHTML;
 
     container.querySelectorAll('.calendar-day').forEach(dayElem => {
-        dayElem.addEventListener('click', () => showDayModal(dayElem.getAttribute('data-date')));
+        dayElem.addEventListener('click', () => {
+            if (calendarMode === 'salary') showSalaryDayModal(dayElem.getAttribute('data-date'));
+            else showDayModal(dayElem.getAttribute('data-date'));
+        });
     });
 }
 
@@ -1142,6 +1288,8 @@ window.onclick = function (event) {
     if (event.target === dayModal) {
         closeDayModal();
     }
+    const salaryDayModal = document.getElementById('salaryDayModal');
+    if (event.target === salaryDayModal) closeSalaryModal();
 };
 
 document.addEventListener('DOMContentLoaded', () => {

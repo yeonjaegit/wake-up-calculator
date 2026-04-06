@@ -27,7 +27,7 @@
     </div>
 
     <div class="tab-menu">
-      <button class="tab-btn active" onclick="openTab('ledgerTab', this)">💰 가계부</button>
+      <button class="tab-btn active" onclick="openTab('ledgerTab', this)">💰 회계 관리</button>
       <button class="tab-btn" onclick="openTab('calcTab', this)">⏰ 기상 시간</button>
       <button class="tab-btn" onclick="openTab('foodTab', this)">🥗 식단 가이드</button>
     </div>
@@ -162,18 +162,50 @@
         </div>
       </div>
 
+      <div id="salaryDayModal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <span class="close" onclick="closeSalaryModal()">&times;</span>
+          <h2 id="salaryDayLabel">날짜 수익</h2>
+          <div id="salaryDayGross" class="day-expense-total">총 매출: 0원</div>
+          <div id="salaryDayList" class="day-expense-list"></div>
+          <div class="login-options">
+            <select id="salaryCategory" class="login-input">
+              <option value="">-- 카테고리 선택 --</option>
+              <option value="헤어메이크업">헤어메이크업</option>
+              <option value="헤어">헤어</option>
+              <option value="메이크업">메이크업</option>
+              <option value="헤어메이크업(헤어만)">헤어메이크업(헤어만)</option>
+              <option value="헤어메이크업(메컵만)">헤어메이크업(메컵만)</option>
+            </select>
+            <input type="number" id="salaryAmount" class="login-input" placeholder="결제 총금액" inputmode="numeric">
+            <select id="salaryPaymentType" class="login-input" onchange="toggleSalaryPayment(this.value)">
+              <option value="">-- 결제 방식 --</option>
+              <option value="현금">현금</option>
+              <option value="카드">카드</option>
+              <option value="분할">분할결제</option>
+            </select>
+            <div id="salarySplitRow" style="display:none;">
+              <label style="font-size:12px;color:#9070c0;font-weight:700;margin-bottom:4px;display:block">현금 금액 (카드 = 총액 - 현금) :</label>
+              <input type="number" id="salaryCashAmt" class="login-input" placeholder="현금 금액" inputmode="numeric">
+            </div>
+            <button onclick="addSalaryEntry()" class="login-btn email-btn">저장</button>
+          </div>
+        </div>
+      </div>
+
       <div class="summary-box">
         <div class="summary-total-row">
-          <span class="total-label">총 지출액</span>
-          <span id="totalAmount" class="total-amount">0</span>
+          <span id="summary1Label" class="total-label">총 지출액</span>
+          <span id="summary1Amount" class="total-amount">0</span>
         </div>
-        <div id="categoryBreakdown" class="category-breakdown"></div>
+        <div id="summary1Breakdown" class="category-breakdown"></div>
       </div>
       <div class="summary-box">
         <div class="summary-total-row" style="margin-bottom:8px;">
-          <span class="total-label">지출수단별 지출액</span>
+          <span id="summary2Label" class="total-label">지출수단별 지출액</span>
+          <span id="summary2Amount" class="total-amount" style="display:none;">0</span>
         </div>
-        <div id="paymentBreakdown" class="category-breakdown"></div>
+        <div id="summary2Breakdown" class="category-breakdown"></div>
       </div>
 
     </div>
