@@ -478,8 +478,12 @@ function getCurrentPeriodRange() {
 }
 
 function setDefaultAccountingPeriod() {
-    ledgerPeriod.startDay = 25; ledgerPeriod.endDay = 24;
-    salaryPeriod.startDay = 25; salaryPeriod.endDay = 24;
+    const savedLedger = parseInt(localStorage.getItem('ledgerStartDay'), 10);
+    const savedSalary = parseInt(localStorage.getItem('salaryStartDay'), 10);
+    const lDay = (!isNaN(savedLedger) && savedLedger >= 1 && savedLedger <= 31) ? savedLedger : 25;
+    const sDay = (!isNaN(savedSalary) && savedSalary >= 1 && savedSalary <= 31) ? savedSalary : 25;
+    ledgerPeriod.startDay = lDay; ledgerPeriod.endDay = lDay === 1 ? 31 : lDay - 1;
+    salaryPeriod.startDay = sDay; salaryPeriod.endDay = sDay === 1 ? 31 : sDay - 1;
     initCurrentPeriodDate();
 }
 
@@ -526,6 +530,13 @@ function savePeriodSetting() {
 
     getActivePeriod().startDay = start;
     getActivePeriod().endDay = start === 1 ? 31 : start - 1;
+    const key = calendarMode === 'salary' ? 'salaryStartDay' : 'ledgerStartDay';
+    localStorage.setItem(key, start);
+    if (currentUser) {
+        db.collection('users').doc(currentUser.uid).collection('settings').doc('period')
+            .set({ [key]: start }, { merge: true })
+            .catch(e => console.warn('기간 저장 실패:', e));
+    }
 
     const today = new Date();
     const ap = getActivePeriod();
@@ -553,7 +564,29 @@ setDefaultAccountingPeriod();
 // 인증 상태 모니터링
 auth.onAuthStateChanged((user) => {
     currentUser = user;
-    updateAuthUI();
+    if (user) {
+        db.collection('users').doc(user.uid).collection('settings').doc('period').get()
+            .then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    const applyDay = (period, key) => {
+                        const d = parseInt(data[key], 10);
+                        if (!isNaN(d) && d >= 1 && d <= 31) {
+                            period.startDay = d;
+                            period.endDay = d === 1 ? 31 : d - 1;
+                            localStorage.setItem(key, d);
+                        }
+                    };
+                    applyDay(ledgerPeriod, 'ledgerStartDay');
+                    applyDay(salaryPeriod, 'salaryStartDay');
+                    initCurrentPeriodDate();
+                }
+                updateAuthUI();
+            })
+            .catch(() => updateAuthUI());
+    } else {
+        updateAuthUI();
+    }
 });
 
 // UI 업데이트 함수
