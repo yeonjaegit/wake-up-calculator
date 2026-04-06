@@ -574,6 +574,12 @@ select.login-input {
   cursor: pointer;
 }
 
+.expense-split-detail {
+  font-size: 10px;
+  color: #9070c0;
+  margin-top: 2px;
+}
+
 .expense-payment {
   display: inline-block;
   font-size: 10px;

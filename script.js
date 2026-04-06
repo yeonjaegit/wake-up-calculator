@@ -119,8 +119,11 @@ const firebaseConfig = {
     messagingSenderId: "842008448776",
     appId: "1:842008448776:web:b5579525f8ebc93a28e6bd"
 };
-let currentCalendarDate = new Date();
+let ledgerCalendarDate = new Date();
+let salaryCalendarDate = new Date();
 let calendarMode = 'ledger';
+function getActiveCalendarDate() { return calendarMode === 'salary' ? salaryCalendarDate : ledgerCalendarDate; }
+function setActiveCalendarDate(d) { if (calendarMode === 'salary') { salaryCalendarDate = d; } else { ledgerCalendarDate = d; } }
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -466,31 +469,25 @@ function formatDateForInput(date) {
 }
 
 function getCurrentPeriodRange() {
-    const startDay = accountingPeriod.startDay;
-    const startDate = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth(), startDay);
-    const endDate = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth() + 1, startDay - 1);
+    const startDay = getActivePeriod().startDay;
+    const startDate = new Date(getActiveCalendarDate().getFullYear(), getActiveCalendarDate().getMonth(), startDay);
+    const endDate = new Date(getActiveCalendarDate().getFullYear(), getActiveCalendarDate().getMonth() + 1, startDay - 1);
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(23, 59, 59, 999);
     return { startDate, endDate };
 }
 
 function setDefaultAccountingPeriod() {
-    accountingPeriod.startDay = 25;
-    accountingPeriod.endDay = 24;
+    ledgerPeriod.startDay = 25; ledgerPeriod.endDay = 24;
+    salaryPeriod.startDay = 25; salaryPeriod.endDay = 24;
     initCurrentPeriodDate();
-    const startInput = document.getElementById('configStartDay');
-    const endInput = document.getElementById('configEndDay');
-    if (startInput && endInput) {
-        startInput.value = accountingPeriod.startDay;
-        endInput.value = accountingPeriod.endDay;
-    }
 }
 
 function updatePeriodInfoDisplay() {
     const info = document.getElementById('periodInfo');
     const displayArea = document.querySelector('.period-display'); // 달력 상단 표시용
 
-    const start = accountingPeriod.startDay;
+    const start = getActivePeriod().startDay;
     // 1일이면 말일(31 or 30), 그 외에는 (시작일 - 1)
     const end = start === 1 ? '말' : start - 1;
 
@@ -503,12 +500,14 @@ function updatePeriodInfoDisplay() {
 function showPeriodModal() {
     const modal = document.getElementById('periodModal');
     if (!modal) return;
+    const titleEl = modal.querySelector('h2');
+    if (titleEl) titleEl.textContent = calendarMode === 'salary' ? '월급 달력 기간 설정' : '가계부 기간 설정';
     modal.style.display = 'flex';
     const startInput = document.getElementById('configStartDay');
     const endInput = document.getElementById('configEndDay');
     if (startInput && endInput) {
-        startInput.value = accountingPeriod.startDay;
-        endInput.value = accountingPeriod.endDay;
+        startInput.value = getActivePeriod().startDay;
+        endInput.value = getActivePeriod().endDay;
     }
 }
 
@@ -525,10 +524,14 @@ function savePeriodSetting() {
         return;
     }
 
-    accountingPeriod.startDay = start;
-    accountingPeriod.endDay = start === 1 ? 31 : start - 1;
+    getActivePeriod().startDay = start;
+    getActivePeriod().endDay = start === 1 ? 31 : start - 1;
 
-    initCurrentPeriodDate();
+    const today = new Date();
+    const ap = getActivePeriod();
+    setActiveCalendarDate(today.getDate() >= ap.startDay
+        ? new Date(today.getFullYear(), today.getMonth(), ap.startDay)
+        : new Date(today.getFullYear(), today.getMonth() - 1, ap.startDay));
     closePeriodModal();
     renderCalendar();
 }
@@ -538,7 +541,9 @@ function savePeriodSetting() {
 // ========================================
 
 let currentUser = null;
-let accountingPeriod = { startDay: null, endDay: null };
+let ledgerPeriod = { startDay: null, endDay: null };
+let salaryPeriod = { startDay: null, endDay: null };
+function getActivePeriod() { return calendarMode === 'salary' ? salaryPeriod : ledgerPeriod; }
 let currentSelectedDate = null;
 let currentSalaryDate = null;
 let currentEditingExpenseId = null;
@@ -751,8 +756,8 @@ function switchCalendarMode(mode) {
 function calcSalaryNet(category, paymentType, totalAmount, cashAmt) {
     // 중간 시술자 분대비율 (1~3번은 혼자 시술 -> 비율 1.0)
     let splitRatio;
-    if (category === '헤어메이크업(헤어만)') splitRatio = 0.4;
-    else if (category === '헤어메이크업(메콝만)') splitRatio = 0.6;
+    if (category === 'H만 진행') splitRatio = 0.4;
+    else if (category === '헤어메이크업 (M만)') splitRatio = 0.6;
     else splitRatio = 1.0;
 
     function applyCard(amt) { return amt * 0.97; }
@@ -814,18 +819,26 @@ async function loadSalaryDayEntries(dateStr) {
         entries.sort((a, b) => new Date(b.timestamp?.toDate?.() || b.timestamp) - new Date(a.timestamp?.toDate?.() || a.timestamp));
         const grossTotal = entries.reduce((s, e) => s + e.totalAmount, 0);
         document.getElementById('salaryDayGross').textContent = `총 매출: ${grossTotal.toLocaleString()}원`;
-        listContainer.innerHTML = entries.map(e => `
+        listContainer.innerHTML = entries.map(e => {
+            const cardAmt = (e.totalAmount || 0) - (e.cashAmount || 0);
+            const payBadge = e.paymentType === '분할'
+                ? `<span class="expense-payment">분할</span><div class="expense-split-detail">현금 ${(e.cashAmount||0).toLocaleString()}원 + 카드 ${cardAmt.toLocaleString()}원</div>`
+                : `<span class="expense-payment">${e.paymentType}</span>`;
+            return `
             <div class="day-expense-item">
               <div class="expense-left">
-                <div class="expense-category">${e.category} <span class="expense-payment">${e.paymentType}</span></div>
-                <div class="expense-memo" style="color:#7c5cbf;font-size:11px;">실수령 +${e.netAmount.toLocaleString()}원</div>
+                <div class="expense-category">${e.category}${e.paymentType !== '분할' ? ` <span class="expense-payment">${e.paymentType}</span>` : ''}</div>
+                ${e.paymentType === '분할' ? `<div class="expense-split-detail">현금 ${(e.cashAmount||0).toLocaleString()}원 + 카드 ${cardAmt.toLocaleString()}원</div>` : ''}
               </div>
-              <div class="day-expense-right">
-                <div class="expense-amount">${e.totalAmount.toLocaleString()}</div>
-                <button onclick="deleteSalaryEntry('${e.id}')" class="delete-btn small-delete-btn">✕</button>
+              <div class="day-expense-right" style="flex-direction:column;align-items:flex-end;gap:2px;">
+                <div style="display:flex;align-items:center;gap:4px;">
+                  <div class="expense-amount">${e.totalAmount.toLocaleString()}</div>
+                  <button onclick="deleteSalaryEntry('${e.id}')" class="delete-btn small-delete-btn">✕</button>
+                </div>
+                <div class="expense-memo" style="text-align:right;">실수령 +${e.netAmount.toLocaleString()}원</div>
               </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
     } catch (err) {
         listContainer.innerHTML = `<p>불러오기 실패: ${err.message}</p>`;
     }
@@ -1085,24 +1098,25 @@ function filterByPeriod(expenses) {
 }
 
 // 금액을 달력 셀에 맞게 압축 포맷 (만 단위)
-// 현재 기간 시작일로 currentCalendarDate 초기화
+// 각 모드별 기간 시작일로 날짜 초기화
 function initCurrentPeriodDate() {
     const today = new Date();
-    const startDay = accountingPeriod.startDay;
-    if (today.getDate() >= startDay) {
-        currentCalendarDate = new Date(today.getFullYear(), today.getMonth(), startDay);
-    } else {
-        currentCalendarDate = new Date(today.getFullYear(), today.getMonth() - 1, startDay);
-    }
+    [['ledger', ledgerPeriod], ['salary', salaryPeriod]].forEach(([mode, p]) => {
+        const startDay = p.startDay;
+        const d = today.getDate() >= startDay
+            ? new Date(today.getFullYear(), today.getMonth(), startDay)
+            : new Date(today.getFullYear(), today.getMonth() - 1, startDay);
+        if (mode === 'salary') { salaryCalendarDate = d; } else { ledgerCalendarDate = d; }
+    });
 }
 
 // 기간 이동 함수 (< > 버튼)
 function changePeriod(offset) {
-    currentCalendarDate = new Date(
-        currentCalendarDate.getFullYear(),
-        currentCalendarDate.getMonth() + offset,
-        accountingPeriod.startDay
-    );
+    setActiveCalendarDate(new Date(
+        getActiveCalendarDate().getFullYear(),
+        getActiveCalendarDate().getMonth() + offset,
+        getActivePeriod().startDay
+    ));
     renderCalendar();
 }
 
@@ -1111,8 +1125,8 @@ async function renderCalendar() {
     const container = document.getElementById('calendarContainer');
     if (!container) return;
 
-    const startDay = accountingPeriod.startDay;
-    const periodStart = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth(), startDay);
+    const startDay = getActivePeriod().startDay;
+    const periodStart = new Date(getActiveCalendarDate().getFullYear(), getActiveCalendarDate().getMonth(), startDay);
     const periodEnd = new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, startDay - 1);
 
     // 헤더 기간 텍스트
