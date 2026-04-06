@@ -223,14 +223,14 @@ body {
 }
 
 .calendar-settings-btn {
-  background: #ede7f6;
-  width: 28px; height: 28px;
+  background: #f5f0ff; color: #7c5cbf;
+  width: 22px; height: 22px; min-width: 22px; max-width: 22px;
+  min-height: 22px; max-height: 22px;
   border-radius: 50%;
-  font-size: 13px;
   border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   -webkit-tap-highlight-color: transparent;
-  padding: 0;
+  padding: 0; box-sizing: border-box;
   position: absolute;
   right: 10px;
   top: 50%;
@@ -242,33 +242,39 @@ body {
   font-weight: 800;
   color: #5a3fa0;
   letter-spacing: -0.3px;
-  line-height: 1.3;
+  line-height: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
   white-space: nowrap;
 }
 
 .month-btn {
   background: none;
   border: none;
-  font-size: 17px;
+  font-size: 18px;
   color: #9070c0;
   cursor: pointer;
-  width: 20px; height: 22px;
+  width: 28px; height: 28px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none;
+  appearance: none;
   padding: 0; line-height: 1;
   flex-shrink: 0;
+  margin: 0;
 }
 
 .calendar-settings-btn {
-  background: #ede7f6;
-  width: 28px; height: 28px;
+  background: #f5f0ff; color: #7c5cbf;
+  width: 22px; height: 22px; min-width: 22px; max-width: 22px;
+  min-height: 22px; max-height: 22px;
   border-radius: 50%;
-  font-size: 13px;
   border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   -webkit-tap-highlight-color: transparent;
-  padding: 0;
+  padding: 0; box-sizing: border-box;
   flex-shrink: 0;
 }
 
@@ -510,32 +516,37 @@ body {
   display: flex; flex-direction: row;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px; flex-shrink: 0;
+  gap: 2px; flex-shrink: 0;
 }
 
-.day-expense-item .expense-amount { font-size: 14px; font-weight: 700; color: #c04090; }
+.day-expense-item .expense-amount { font-size: 14px; font-weight: 700; color: #c04090; margin-right: 3px; }
 
 .small-delete-btn, .small-edit-btn {
-  width: 26px; height: 26px; min-width: 26px;
+  width: 22px; height: 22px; min-width: 22px; max-width: 22px;
+  min-height: 22px; max-height: 22px;
   border-radius: 50%;
   padding: 0; display: inline-flex;
   align-items: center; justify-content: center;
   border: none; cursor: pointer;
   font-weight: 700;
+  font-size: 9px;
   -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+  flex-grow: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .small-delete-btn {
-  font-size: 10px;
-  background: #e8c8e8; color: #a040a0;
+  background: #d8c8f5; color: #7c5cbf;
 }
-.small-delete-btn:hover { background: #d8a8d8; }
+.small-delete-btn:hover { background: #c4aeef; }
 
 .small-edit-btn {
-  font-size: 12px;
   background: #d8c8f5; color: #5a3fa0;
 }
 .small-edit-btn:hover { background: #c4aeef; }
+.small-edit-btn svg, .small-delete-btn svg { pointer-events: none; }
 
 .day-expense-total {
   margin-bottom: 12px; padding: 10px 14px;
@@ -692,4 +703,3 @@ button#calculateBtn {
 .food-list.good li { color: #2e7d32; }
 
 .expense-category { background: #ede7f6; color: #5a3fa0; padding: 2px 7px; border-radius: 8px; font-size: 11px; font-weight: 600; display: inline-block; }
-.delete-btn { background: #d8c8f5; color: #7c5cbf; border: none; border-radius: 50%; width: 20px; height: 20px; min-width: 20px; padding: 0; cursor: pointer; font-size: 9px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }

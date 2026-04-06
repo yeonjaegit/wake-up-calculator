@@ -624,7 +624,7 @@ function showDayModal(dateStr) {
     document.getElementById('dayExpenseAmount').value = '';
     document.getElementById('dayExpenseMemo').value = '';
     document.getElementById('dayExpensePayment').value = '';
-    document.getElementById('saveExpenseBtn').textContent = '저장 !!';
+    document.getElementById('saveExpenseBtn').textContent = '저장하기 !!';
     document.getElementById('cancelEditBtn').style.display = 'none';
     document.getElementById('installmentRow').style.display = 'none';
     document.getElementById('dayExpenseInstallment').value = '1';
@@ -669,8 +669,8 @@ async function loadDayExpenses(dateStr) {
                 <div class="expense-amount">-${exp.amount.toLocaleString()}</div>
                 <button onclick="startEditExpense('${exp.id}','${exp.category.replace(/'/g,"\\'")}',${
                   exp.amount},'${(exp.memo||'').replace(/'/g,"\\'")}','${(exp.payment||'').replace(/'/g,"\\'")}','${exp.date}')"
-                  class="small-edit-btn">✏️</button>
-                <button onclick="deleteExpense('${exp.id}')" class="delete-btn small-delete-btn">✕</button>
+                  class="small-edit-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
+                <button onclick="deleteExpense('${exp.id}')" class="small-delete-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
               </div>
             </div>
         `).join('');
@@ -861,8 +861,8 @@ async function loadSalaryDayEntries(dateStr) {
               </div>
               <div class="day-expense-right">
                 <div class="expense-amount">${e.totalAmount.toLocaleString()}</div>
-                <button onclick="startEditSalaryEntry('${e.id}', '${e.category.replace(/'/g, "\\'")}'  , ${e.cashAmount||0}, ${e.cardAmount||0})" class="small-edit-btn">✏️</button>
-                <button onclick="deleteSalaryEntry('${e.id}')" class="delete-btn small-delete-btn">✕</button>
+                <button onclick="startEditSalaryEntry('${e.id}', '${e.category.replace(/'/g, "\\'")}'  , ${e.cashAmount||0}, ${e.cardAmount||0})" class="small-edit-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
+                <button onclick="deleteSalaryEntry('${e.id}')" class="small-delete-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
               </div>
             </div>`;
         }).join('');
@@ -896,7 +896,7 @@ function addSalaryEntry() {
 
 function deleteSalaryEntry(id) {
     if (!currentUser) return;
-    if (!confirm('삭제할까요?')) return;
+    if (!confirm('정말 삭제할거야??!!')) return;
     db.collection('users').doc(currentUser.uid).collection('salaryEntries').doc(id).delete()
         .then(() => { loadSalaryDayEntries(currentSalaryDate); renderCalendar(); })
         .catch(e => alert(`삭제 실패: ${e.message}`));
@@ -908,7 +908,7 @@ function startEditSalaryEntry(id, category, cashAmount, cardAmount) {
     document.getElementById('salaryCardAmt').value = cardAmount || 0;
     const btn = document.getElementById('saveSalaryBtn');
     btn.dataset.editId = id;
-    btn.textContent = '수정 저장';
+    btn.textContent = '수정 후 저장 !!';
     document.getElementById('cancelSalaryEditBtn').style.display = '';
     document.getElementById('salaryEditRow').style.display = '';
     document.getElementById('salaryCategory').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -920,7 +920,7 @@ function cancelSalaryEdit() {
     document.getElementById('salaryCardAmt').value = '';
     const btn = document.getElementById('saveSalaryBtn');
     btn.dataset.editId = '';
-    btn.textContent = '+등록';
+    btn.textContent = '저장하기 !!';
     document.getElementById('cancelSalaryEditBtn').style.display = 'none';
     document.getElementById('salaryEditRow').style.display = 'none';
 }
@@ -1292,7 +1292,7 @@ async function renderCalendar() {
                     <span class="period-title">${headerText}</span>
                     <button class="month-btn" onclick="changePeriod(1)">›</button>
                 </div>
-                <button class="calendar-settings-btn" onclick="showPeriodModal()">✏️</button>
+                <button class="calendar-settings-btn" onclick="showPeriodModal()"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
             </div>
             <div class="calendar-grid-header">
                 <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
