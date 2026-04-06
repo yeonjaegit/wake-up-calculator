@@ -120,6 +120,7 @@ const firebaseConfig = {
     appId: "1:842008448776:web:b5579525f8ebc93a28e6bd"
 };
 let currentCalendarDate = new Date();
+let calendarMode = 'ledger';
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -556,32 +557,16 @@ function updateAuthUI() {
     const logoutBtn = document.getElementById('logoutBtn');
     const userInfo = document.getElementById('userInfo');
     const expenseForm = document.querySelector('.expense-form');
-    const faceBtn = document.getElementById('faceIdRegisterBtn');
 
     if (currentUser) {
         authStatus.style.display = 'none';
         if (expenseForm) expenseForm.style.display = 'block';
-        const faceWrap = document.getElementById('faceIdRegisterWrap');
-        if (faceBtn && faceWrap) {
-            if (!hasFaceIdRegistered() && isBiometricSupported()) {
-                faceWrap.style.display = 'block';
-                faceBtn.textContent = 'Face ID 등록';
-                faceBtn.disabled = false;
-            } else if (hasFaceIdRegistered()) {
-                faceWrap.style.display = 'block';
-                faceBtn.textContent = '✅ Face ID 등록됨';
-                faceBtn.disabled = true;
-            } else {
-                faceWrap.style.display = 'none';
-            }
-        }
         loadExpenses();
     } else {
         authStatus.style.display = 'flex';
         loginBtn.style.display = 'inline';
         logoutBtn.style.display = 'none';
         userInfo.style.display = 'none';
-        if (faceBtn) faceBtn.style.display = 'none';
         if (expenseForm) expenseForm.style.display = 'none';
         document.getElementById('totalAmount').textContent = '0';
         const pb = document.getElementById('paymentBreakdown'); if (pb) pb.innerHTML = '';
@@ -602,6 +587,8 @@ function showDayModal(dateStr) {
     document.getElementById('dayExpensePayment').value = '';
     document.getElementById('saveExpenseBtn').textContent = '저장 !!';
     document.getElementById('cancelEditBtn').style.display = 'none';
+    document.getElementById('installmentRow').style.display = 'none';
+    document.getElementById('dayExpenseInstallment').value = '1';
     loadDayExpenses(dateStr);
     document.getElementById('dayModal').style.display = 'flex';
 }
@@ -689,16 +676,34 @@ function addExpenseForSelectedDay() {
     } else {
         // 신규 추가 모드
         if (!currentSelectedDate) { alert('날짜를 선택해주세요.'); return; }
-        db.collection('users').doc(currentUser.uid).collection('expenses').add({
-            date: currentSelectedDate,
-            category, amount, memo, payment,
-            timestamp: new Date()
-        })
-        .then(() => {
-            closeDayModal();
-            loadExpenses();
-        })
-        .catch(e => alert(`저장 실패: ${e.message}`));
+        const installment = parseInt(document.getElementById('dayExpenseInstallment')?.value || '1', 10);
+        if (installment > 1) {
+            const perMonth = Math.round(amount / installment);
+            const [iy, im, id] = currentSelectedDate.split('-').map(Number);
+            const promises = [];
+            for (let i = 0; i < installment; i++) {
+                const d = new Date(iy, im - 1 + i, id);
+                const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                promises.push(db.collection('users').doc(currentUser.uid).collection('expenses').add({
+                    date: ds,
+                    category: `${category} (${i+1}/${installment})`,
+                    amount: perMonth,
+                    memo, payment,
+                    timestamp: new Date()
+                }));
+            }
+            Promise.all(promises)
+                .then(() => { closeDayModal(); loadExpenses(); })
+                .catch(e => alert(`저장 실패: ${e.message}`));
+        } else {
+            db.collection('users').doc(currentUser.uid).collection('expenses').add({
+                date: currentSelectedDate,
+                category, amount, memo, payment,
+                timestamp: new Date()
+            })
+            .then(() => { closeDayModal(); loadExpenses(); })
+            .catch(e => alert(`저장 실패: ${e.message}`));
+        }
     }
 }
 
@@ -726,8 +731,75 @@ function cancelEdit() {
     document.getElementById('dayExpensePayment').options[0].style.display = '';
     document.getElementById('editDateInput').value = '';
     document.getElementById('editDateRow').style.display = 'none';
+    document.getElementById('installmentRow').style.display = 'none';
+    document.getElementById('dayExpenseInstallment').value = '1';
     document.getElementById('saveExpenseBtn').textContent = '저장';
     document.getElementById('cancelEditBtn').style.display = 'none';
+}
+
+function switchCalendarMode(mode) {
+    calendarMode = mode;
+    document.getElementById('modeLedgerBtn').classList.toggle('active', mode === 'ledger');
+    document.getElementById('modeSalaryBtn').classList.toggle('active', mode === 'salary');
+    const summaryBoxes = document.querySelectorAll('#ledgerTab .summary-box');
+    summaryBoxes.forEach(b => b.style.display = mode === 'ledger' ? '' : 'none');
+    renderCalendar();
+}
+
+function toggleInstallmentRow(paymentValue) {
+    const row = document.getElementById('installmentRow');
+    if (!row) return;
+    row.style.display = paymentValue === '신용카드' ? 'block' : 'none';
+    if (paymentValue !== '신용카드') {
+        document.getElementById('dayExpenseInstallment').value = '1';
+    }
+}
+
+function autoFillEndDay(startVal) {
+    const start = parseInt(startVal, 10);
+    if (!isNaN(start) && start >= 1 && start <= 31) {
+        document.getElementById('configEndDay').value = start === 1 ? 31 : start - 1;
+    }
+}
+
+function calcSalary() {
+    const base  = parseInt(document.getElementById('salaryBase').value)  || 0;
+    const meal  = parseInt(document.getElementById('salaryMeal').value)  || 0;
+    const extra = parseInt(document.getElementById('salaryExtra').value) || 0;
+    if (base <= 0) { alert('기본급을 입력해줘!'); return; }
+    const total = base + meal + extra;
+    const mealExempt = Math.min(meal, 200000);
+    const taxable = total - mealExempt;
+    const pension  = Math.round(taxable * 0.045);
+    const health   = Math.round(taxable * 0.03545);
+    const longterm = Math.round(health * 0.1295);
+    const employ   = Math.round(taxable * 0.009);
+    let incomeTax = 0;
+    if (taxable > 1060000) {
+        if      (taxable <= 1500000) incomeTax = Math.round((taxable - 1060000) * 0.06);
+        else if (taxable <= 3000000) incomeTax = Math.round(26400 + (taxable - 1500000) * 0.15);
+        else if (taxable <= 4500000) incomeTax = Math.round(251400 + (taxable - 3000000) * 0.24);
+        else                          incomeTax = Math.round(611400 + (taxable - 4500000) * 0.35);
+    }
+    const localTax = Math.round(incomeTax * 0.1);
+    const totalDeduct = pension + health + longterm + employ + incomeTax + localTax;
+    const net = total - totalDeduct;
+    document.getElementById('salaryGross').textContent = total.toLocaleString() + '원';
+    document.getElementById('salaryNet').textContent   = net.toLocaleString() + '원';
+    document.getElementById('salaryDeductBreakdown').innerHTML = [
+        ['국민연금 (4.5%)',    pension],
+        ['건강보험 (3.545%)', health],
+        ['장기요양보험',       longterm],
+        ['고용보험 (0.9%)',   employ],
+        ['소득세',             incomeTax],
+        ['지방소득세',         localTax],
+        ['── 총 공제',        totalDeduct],
+    ].map(([name, amt]) => `
+        <div class="category-row">
+            <span class="category-row-name">${name}</span>
+            <span class="category-row-amount">-${amt.toLocaleString()}</span>
+        </div>`).join('');
+    document.getElementById('salaryResult').style.display = 'block';
 }
 
 // 로그인 모달
@@ -848,11 +920,11 @@ function deleteExpense(expenseId) {
 
     db.collection('users').doc(currentUser.uid).collection('expenses').doc(expenseId).delete()
         .then(() => {
-            alert('지출 삭제했떠');
+            closeDayModal();
             loadExpenses();
         })
         .catch(error => {
-            alert(`삭제 실패ㅠ.ㅠ 연재에게 문의하시오!!: ${error.message}`);
+            alert(`삭제 실패ㅠ.ㅠ: ${error.message}`);
         });
 }
 
@@ -938,7 +1010,15 @@ async function renderCalendar() {
     let categoryTotals = {};
     let paymentTotals = {};
 
-    if (currentUser) {
+    if (calendarMode === 'salary') {
+        // 월급 달력 틀 - 데이터는 추후 구현
+        const totalElem = document.getElementById('totalAmount');
+        if (totalElem) totalElem.textContent = '0';
+        const breakdownElem = document.getElementById('categoryBreakdown');
+        if (breakdownElem) breakdownElem.innerHTML = '';
+        const paymentElem = document.getElementById('paymentBreakdown');
+        if (paymentElem) paymentElem.innerHTML = '';
+    } else if (currentUser) {
         const snapshot = await db.collection('users').doc(currentUser.uid).collection('expenses').get();
         snapshot.forEach(doc => {
             const data = doc.data();

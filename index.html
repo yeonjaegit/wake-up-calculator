@@ -28,8 +28,8 @@
 
     <div class="tab-menu">
       <button class="tab-btn active" onclick="openTab('ledgerTab', this)">💰 가계부</button>
-      <button class="tab-btn" onclick="openTab('calcTab', this)">⏰ 알람 시간</button>
-      <button class="tab-btn" onclick="openTab('foodTab', this)">🥗 음식 가이드</button>
+      <button class="tab-btn" onclick="openTab('calcTab', this)">⏰ 기상 시간</button>
+      <button class="tab-btn" onclick="openTab('foodTab', this)">🥗 식단 가이드</button>
     </div>
 
     <div id="calcTab" class="tab-content">
@@ -81,10 +81,10 @@
         <span id="userInfo" style="display:none;"></span>
         <button id="logoutBtn" onclick="logout()" style="display:none;">로그아웃</button>
       </div>
-      <div id="faceIdRegisterWrap" style="display:none;text-align:right;padding:0 0 6px 0;">
-        <button id="faceIdRegisterBtn" onclick="registerFaceId()" class="faceid-register-btn">Face ID 등록</button>
+      <div class="calendar-mode-toggle">
+        <button id="modeLedgerBtn" class="mode-btn active" onclick="switchCalendarMode('ledger')">가계부</button>
+        <button id="modeSalaryBtn" class="mode-btn" onclick="switchCalendarMode('salary')">월급 달력</button>
       </div>
-
       <div id="calendarContainer" class="calendar-container"></div>
 
       <div id="dayModal" class="modal" style="display:none;">
@@ -97,17 +97,46 @@
             <input type="text" id="dayExpenseCategory" class="login-input" placeholder="카테고리" autocomplete="off" list="categoryList">
             <datalist id="categoryList"></datalist>
             <input type="number" id="dayExpenseAmount" class="login-input" placeholder="금액">
-            <select id="dayExpensePayment" class="login-input">
+            <select id="dayExpensePayment" class="login-input" onchange="toggleInstallmentRow(this.value)">
               <option value="">-- 지출수단 선택 --</option>
               <option value="현금">현금</option>
               <option value="체크카드">체크카드</option>
               <option value="신용카드">신용카드</option>
               <option value="기타">기타</option>
             </select>
+            <div id="installmentRow" style="display:none;">
+              <label style="font-size:12px;color:#9070c0;font-weight:700;margin-bottom:4px;display:block">할부 :</label>
+              <select id="dayExpenseInstallment" class="login-input">
+                <option value="1">일시불</option>
+                <option value="2">2개월</option>
+                <option value="3">3개월</option>
+                <option value="4">4개월</option>
+                <option value="5">5개월</option>
+                <option value="6">6개월</option>
+                <option value="7">7개월</option>
+                <option value="8">8개월</option>
+                <option value="9">9개월</option>
+                <option value="10">10개월</option>
+                <option value="11">11개월</option>
+                <option value="12">12개월</option>
+                <option value="13">13개월</option>
+                <option value="14">14개월</option>
+                <option value="15">15개월</option>
+                <option value="16">16개월</option>
+                <option value="17">17개월</option>
+                <option value="18">18개월</option>
+                <option value="19">19개월</option>
+                <option value="20">20개월</option>
+                <option value="21">21개월</option>
+                <option value="22">22개월</option>
+                <option value="23">23개월</option>
+                <option value="24">24개월</option>
+              </select>
+            </div>
             <textarea id="dayExpenseMemo" class="login-input" placeholder="메모" rows="2"></textarea>
             <div id="editDateRow" style="display:none;">
               <label style="font-size:12px;color:#9070c0;font-weight:700;margin-bottom:4px;display:block">날짜 변경</label>
-              <input type="date" id="editDateInput" class="login-input">
+              <input type="date" id="editDateInput" class="login-input" style="max-width:100%;box-sizing:border-box;">
             </div>
             <button id="saveExpenseBtn" onclick="addExpenseForSelectedDay()" class="login-btn email-btn">저장</button>
             <button id="cancelEditBtn" onclick="cancelEdit()" class="login-btn" style="display:none;background:#d8c8f5;color:#5a3fa0;">취소</button>
@@ -120,8 +149,14 @@
           <span class="close" onclick="closePeriodModal()">&times;</span>
           <h2>회계 기간 설정</h2>
           <div class="login-options">
-            <input type="number" id="configStartDay" class="login-input" placeholder="시작일 (예: 25)" min="1" max="31">
-            <input type="number" id="configEndDay" class="login-input" placeholder="종료일 (예: 24)" min="1" max="31">
+            <div>
+              <label style="font-size:12px;color:#9070c0;font-weight:700;margin-bottom:4px;display:block;margin-left:6px">시작일 :</label>
+              <input type="number" id="configStartDay" class="login-input" placeholder="예: 25" min="1" max="31" oninput="autoFillEndDay(this.value)">
+            </div>
+            <div>
+              <label style="font-size:12px;color:#9070c0;font-weight:700;margin-bottom:4px;display:block;margin-left:6px">종료일 :</label>
+              <input type="number" id="configEndDay" class="login-input" placeholder="자동 계산" min="1" max="31" readonly style="background:#f5f0ff;color:#9070c0;">
+            </div>
             <button onclick="savePeriodSetting()" class="login-btn email-btn">저장</button>
           </div>
         </div>
@@ -142,16 +177,7 @@
       </div>
 
     </div>
-  </div>
 
-  <!-- Face ID 등록 프롬프트 모달 -->
-  <div id="faceIdPromptModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(92,63,160,0.35);z-index:99999;display:none;align-items:center;justify-content:center;">
-    <div style="background:#fff;border-radius:20px;padding:36px 28px;max-width:320px;width:88%;text-align:center;box-shadow:0 8px 32px rgba(92,63,160,0.18);">
-      <h2 style="font-family:'Jua',sans-serif;color:#5a3fa0;margin:0 0 8px;">Face ID 등록할까요?</h2>
-      <p style="color:#9070c0;font-size:13px;margin:0 0 24px;">다음부터 Face ID로 빠르게 접속할 수 있어요!</p>
-      <button onclick="registerFaceId()" style="display:block;width:100%;padding:13px;background:#7c5cbf;color:#fff;border:none;border-radius:12px;font-family:'Jua',sans-serif;font-size:16px;cursor:pointer;margin-bottom:10px;">등록하기</button>
-      <button onclick="closeFaceIdPrompt(false)" style="display:block;width:100%;padding:13px;background:#ede6ff;color:#5a3fa0;border:none;border-radius:12px;font-family:'Jua',sans-serif;font-size:15px;cursor:pointer;">나중에</button>
-    </div>
   </div>
 
   <!-- Firebase SDK -->

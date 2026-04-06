@@ -81,6 +81,33 @@ body {
   font-size: 12px;
 }
 
+.calendar-mode-toggle {
+  display: flex;
+  gap: 6px;
+  padding: 8px 4px 4px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 8px 0;
+  font-size: 13px;
+  font-family: 'Jua', sans-serif;
+  border: 1.5px solid #d8c8f5;
+  border-radius: 20px;
+  background: #fff;
+  color: #b0a0d0;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mode-btn.active {
+  background: #7c5cbf;
+  color: #fff;
+  border-color: #7c5cbf;
+  font-weight: 700;
+}
+
 #loginBtn, #logoutBtn {
   padding: 5px 14px;
   font-size: 12px;
@@ -596,6 +623,13 @@ h1 { font-size: 20px; margin-bottom: 8px; font-weight: 800; color: #5a3fa0; }
 .input-group input[type="time"]::-webkit-calendar-picker-indicator,
 input[type="date"]::-webkit-calendar-picker-indicator {
   display: none;
+}
+
+#editDateInput {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 button#calculateBtn {
