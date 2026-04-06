@@ -783,7 +783,7 @@ function toggleSalaryPayment(type) {
 function showSalaryDayModal(dateStr) {
     if (!currentUser) { showLoginModal(); return; }
     currentSalaryDate = dateStr;
-    document.getElementById('salaryDayLabel').textContent = `${dateStr} 수익 내역`;
+    document.getElementById('salaryDayLabel').textContent = `${dateStr} 매출 내역`;
     document.getElementById('salaryCategory').value = '';
     document.getElementById('salaryAmount').value = '';
     document.getElementById('salaryPaymentType').value = '';
