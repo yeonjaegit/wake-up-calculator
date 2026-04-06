@@ -859,13 +859,10 @@ async function loadSalaryDayEntries(dateStr) {
                 <div class="expense-category">${e.category}${e.paymentType !== '분할' ? ` <span class="expense-payment">${e.paymentType}</span>` : ''}</div>
                 ${e.paymentType === '분할' ? `<div class="expense-split-detail">현금 ${(e.cashAmount||0).toLocaleString()}원 + 카드 ${cardAmt.toLocaleString()}원</div>` : ''}
               </div>
-              <div class="day-expense-right" style="flex-direction:column;align-items:flex-end;gap:2px;">
-                <div style="display:flex;align-items:center;gap:4px;">
-                  <div class="expense-amount">${e.totalAmount.toLocaleString()}</div>
-                  <button onclick="deleteSalaryEntry('${e.id}')" class="delete-btn small-delete-btn">✕</button>
-                </div>
-                <div class="expense-memo" style="text-align:right;">실수령 +${e.netAmount.toLocaleString()}원</div>
-                <button onclick="startEditSalaryEntry('${e.id}', '${e.category.replace(/'/g, "\\'")}'  , ${e.cashAmount||0}, ${e.cardAmount||0})" class="small-edit-btn" style="margin-top:4px;">✏️</button>
+              <div class="day-expense-right">
+                <div class="expense-amount">${e.totalAmount.toLocaleString()}</div>
+                <button onclick="startEditSalaryEntry('${e.id}', '${e.category.replace(/'/g, "\\'")}'  , ${e.cashAmount||0}, ${e.cardAmount||0})" class="small-edit-btn">✏️</button>
+                <button onclick="deleteSalaryEntry('${e.id}')" class="delete-btn small-delete-btn">✕</button>
               </div>
             </div>`;
         }).join('');
