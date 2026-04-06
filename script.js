@@ -675,7 +675,7 @@ function addExpenseForSelectedDay() {
             .set({ category, amount, memo, payment, date: newDate }, { merge: true })
             .then(() => {
                 cancelEdit();
-                closeDayModal();
+                loadDayExpenses(currentSelectedDate);
                 loadExpenses();
             })
             .catch(e => alert(`수정 실패: ${e.message}`));
@@ -699,7 +699,7 @@ function addExpenseForSelectedDay() {
                 }));
             }
             Promise.all(promises)
-                .then(() => { closeDayModal(); loadExpenses(); })
+                .then(() => { loadDayExpenses(currentSelectedDate); loadExpenses(); })
                 .catch(e => alert(`저장 실패: ${e.message}`));
         } else {
             db.collection('users').doc(currentUser.uid).collection('expenses').add({
@@ -707,7 +707,7 @@ function addExpenseForSelectedDay() {
                 category, amount, memo, payment,
                 timestamp: new Date()
             })
-            .then(() => { closeDayModal(); loadExpenses(); })
+            .then(() => { loadDayExpenses(currentSelectedDate); loadExpenses(); })
             .catch(e => alert(`저장 실패: ${e.message}`));
         }
     }
@@ -789,11 +789,7 @@ function showSalaryDayModal(dateStr) {
     if (!currentUser) { showLoginModal(); return; }
     currentSalaryDate = dateStr;
     document.getElementById('salaryDayLabel').textContent = `${dateStr} 매출 내역`;
-    document.getElementById('salaryCategory').value = '';
-    document.getElementById('salaryAmount').value = '';
-    document.getElementById('salaryPaymentType').value = '';
-    document.getElementById('salarySplitRow').style.display = 'none';
-    document.getElementById('salaryCashAmt').value = '';
+    cancelSalaryEdit();
     loadSalaryDayEntries(dateStr);
     document.getElementById('salaryDayModal').style.display = 'flex';
 }
@@ -836,6 +832,7 @@ async function loadSalaryDayEntries(dateStr) {
                   <button onclick="deleteSalaryEntry('${e.id}')" class="delete-btn small-delete-btn">✕</button>
                 </div>
                 <div class="expense-memo" style="text-align:right;">실수령 +${e.netAmount.toLocaleString()}원</div>
+                <button onclick="startEditSalaryEntry('${e.id}', '${e.category.replace(/'/g, "\\'")}'  , ${e.cashAmount||0}, ${e.cardAmount||0})" class="small-edit-btn" style="margin-top:4px;">✏️</button>
               </div>
             </div>`;
         }).join('');
@@ -847,35 +844,55 @@ async function loadSalaryDayEntries(dateStr) {
 function addSalaryEntry() {
     if (!currentUser) { alert('로그인이 필요합니다.'); return; }
     const category = document.getElementById('salaryCategory').value;
-    const totalAmount = parseInt(document.getElementById('salaryAmount').value, 10);
-    const paymentType = document.getElementById('salaryPaymentType').value;
-    const cashAmt = parseInt(document.getElementById('salaryCashAmt').value, 10) || 0;
-    if (!category) { alert('카테고리를 선택해주세요.'); return; }
-    if (!totalAmount || totalAmount <= 0) { alert('금액을 입력해주세요.'); return; }
-    if (!paymentType) { alert('결제 방식을 선택해주세요.'); return; }
-    if (paymentType === '분할') {
-        if (cashAmt <= 0) { alert('현금 금액을 입력해주세요.'); return; }
-        if (cashAmt >= totalAmount) { alert('현금 금액이 총액보다 크거나 같아요.'); return; }
-    }
-    const cardAmt = paymentType === '분할' ? totalAmount - cashAmt : 0;
+    const cashAmt = parseInt(document.getElementById('salaryAmount').value, 10) || 0;
+    const cardAmt = parseInt(document.getElementById('salaryCardAmt').value, 10) || 0;
+    if (!category) { alert('시술을 선택해주세요.'); return; }
+    if (cashAmt <= 0 && cardAmt <= 0) { alert('현금 또는 카드 금액을 입력해주세요.'); return; }
+    const totalAmount = cashAmt + cardAmt;
+    const paymentType = cashAmt > 0 && cardAmt > 0 ? '분할' : cashAmt > 0 ? '현금' : '카드';
     const netAmount = calcSalaryNet(category, paymentType, totalAmount, cashAmt);
-    db.collection('users').doc(currentUser.uid).collection('salaryEntries').add({
-        date: currentSalaryDate,
-        category, totalAmount, paymentType,
-        cashAmount: cashAmt, cardAmount: cardAmt,
-        netAmount,
-        timestamp: new Date()
-    })
-    .then(() => { closeSalaryModal(); renderCalendar(); })
-    .catch(e => alert(`저장 실패: ${e.message}`));
+
+    const editingId = document.getElementById('saveSalaryBtn').dataset.editId || null;
+    const ref = db.collection('users').doc(currentUser.uid).collection('salaryEntries');
+    const op = editingId
+        ? ref.doc(editingId).set({ category, totalAmount, paymentType, cashAmount: cashAmt, cardAmount: cardAmt, netAmount }, { merge: true })
+        : ref.add({ date: currentSalaryDate, category, totalAmount, paymentType, cashAmount: cashAmt, cardAmount: cardAmt, netAmount, timestamp: new Date() });
+    op.then(() => {
+        cancelSalaryEdit();
+        loadSalaryDayEntries(currentSalaryDate);
+        renderCalendar();
+    }).catch(e => alert(`저장 실패: ${e.message}`));
 }
 
 function deleteSalaryEntry(id) {
     if (!currentUser) return;
     if (!confirm('삭제할까요?')) return;
     db.collection('users').doc(currentUser.uid).collection('salaryEntries').doc(id).delete()
-        .then(() => { closeSalaryModal(); renderCalendar(); })
+        .then(() => { loadSalaryDayEntries(currentSalaryDate); renderCalendar(); })
         .catch(e => alert(`삭제 실패: ${e.message}`));
+}
+
+function startEditSalaryEntry(id, category, cashAmount, cardAmount) {
+    document.getElementById('salaryCategory').value = category;
+    document.getElementById('salaryAmount').value = cashAmount || 0;
+    document.getElementById('salaryCardAmt').value = cardAmount || 0;
+    const btn = document.getElementById('saveSalaryBtn');
+    btn.dataset.editId = id;
+    btn.textContent = '수정 저장';
+    document.getElementById('cancelSalaryEditBtn').style.display = '';
+    document.getElementById('salaryEditRow').style.display = '';
+    document.getElementById('salaryCategory').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function cancelSalaryEdit() {
+    document.getElementById('salaryCategory').value = '';
+    document.getElementById('salaryAmount').value = '';
+    document.getElementById('salaryCardAmt').value = '';
+    const btn = document.getElementById('saveSalaryBtn');
+    btn.dataset.editId = '';
+    btn.textContent = '+등록';
+    document.getElementById('cancelSalaryEditBtn').style.display = 'none';
+    document.getElementById('salaryEditRow').style.display = 'none';
 }
 
 function toggleInstallmentRow(paymentValue) {
@@ -1052,7 +1069,7 @@ function deleteExpense(expenseId) {
 
     db.collection('users').doc(currentUser.uid).collection('expenses').doc(expenseId).delete()
         .then(() => {
-            closeDayModal();
+            loadDayExpenses(currentSelectedDate);
             loadExpenses();
         })
         .catch(error => {
