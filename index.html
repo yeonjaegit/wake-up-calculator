@@ -10,26 +10,15 @@
   <link rel="icon" href="https://fav.farm/🍀">
 </head>
 <body>
-    <!-- Face ID 잠금화면 -->
-    <div id="faceIdLock" style="display:none;">
-      <div class="faceid-screen">
-        <div class="faceid-icon">🔐</div>
-        <div class="faceid-title">쓰연이 케어 센터</div>
-        <div class="faceid-sub">Face ID로 접속하기</div>
-        <button class="faceid-btn" onclick="authenticateWithFaceId()">Face ID 인증 하기</button>
-        <button class="faceid-fallback" onclick="fallbackToGoogleLogin()">구글 로기인으로 접속</button>
-      </div>
-    </div>
-
     <div class="container">
     <div id="weatherBox" class="weather-box">
       <div id="weatherInfo">날씨 정보를 불러오는 중...</div>
     </div>
 
     <div class="tab-menu">
-      <button class="tab-btn active" onclick="openTab('ledgerTab', this)">🍀회계 관리</button>
-      <button class="tab-btn" onclick="openTab('calcTab', this)">😴기상 시간</button>
-      <button class="tab-btn" onclick="openTab('foodTab', this)">🐷식단 가이드</button>
+      <button class="tab-btn active" onclick="openTab('ledgerTab', this)">🍀 회계 관리</button>
+      <button class="tab-btn" onclick="openTab('calcTab', this)">🌙 기상 시간</button>
+      <button class="tab-btn" onclick="openTab('foodTab', this)">🐽 식단 가이드</button>
     </div>
 
     <div id="calcTab" class="tab-content">
