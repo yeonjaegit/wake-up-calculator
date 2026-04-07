@@ -1268,7 +1268,7 @@ async function renderCalendar() {
     if (calendarMode === 'salary') {
         // Box1 = 총 매출 (grossTotal + 결제수단 breakdown)
         if (s1Label)  s1Label.textContent  = '총 매출';
-        if (s1Amount) { s1Amount.textContent = grossTotal > 0 ? `+${grossTotal.toLocaleString()}` : '0'; s1Amount.style.display = ''; }
+        if (s1Amount) { s1Amount.textContent = (grossTotal > 0 ? `+${grossTotal.toLocaleString()}` : '0') + ' / 13,900,000' + (grossTotal >= 13900000 ? ' 달성 !!' : ''); s1Amount.style.display = ''; }
         if (s1Break)  s1Break.innerHTML = makePayHTML(paymentTotals, '+');
         // Box2 = 총 실수령액 (netTotal + 카테고리 breakdown)
         if (s2Label)  s2Label.textContent  = '총 실수령액';
