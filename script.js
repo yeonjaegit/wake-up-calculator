@@ -1272,7 +1272,7 @@ async function renderCalendar() {
         if (s1Break)  s1Break.innerHTML = makePayHTML(paymentTotals, '+');
         // Box2 = 총 실수령액 (netTotal + 카테고리 breakdown)
         if (s2Label)  s2Label.textContent  = '총 실수령액';
-        if (s2Amount) { s2Amount.textContent = periodTotal > 0 ? `+${periodTotal.toLocaleString()}` : '0'; s2Amount.style.display = ''; }
+        if (s2Amount) { s2Amount.textContent = (periodTotal > 0 ? `+${periodTotal.toLocaleString()}` : '0') + ' / 5,000,000' + (periodTotal >= 5000000 ? ' 달성 !!' : ''); s2Amount.style.display = ''; }
         if (s2Break)  s2Break.innerHTML = makeCatHTML(categoryTotals, '+');
         // Box3 = 결제수단별 실수령액
         if (s3Box) s3Box.style.display = '';
