@@ -786,6 +786,12 @@ function switchCalendarMode(mode) {
 // ========================================
 // 월급 달력 기능
 // ========================================
+function salaryGrossAmt(category, amount) {
+    if (category === 'H만 진행') return Math.round(amount * 0.4);
+    if (category === '헤어메이크업 (M만)') return Math.round(amount * 0.6);
+    return amount;
+}
+
 function calcSalaryNet(category, paymentType, totalAmount, cashAmt) {
     // 중간 시술자 분대비율 (1~3번은 혼자 시술 -> 비율 1.0)
     let splitRatio;
@@ -846,7 +852,7 @@ async function loadSalaryDayEntries(dateStr) {
         const entries = [];
         snapshot.forEach(doc => entries.push({ id: doc.id, ...doc.data() }));
         entries.sort((a, b) => new Date(b.timestamp?.toDate?.() || b.timestamp) - new Date(a.timestamp?.toDate?.() || a.timestamp));
-        const grossTotal = entries.reduce((s, e) => s + e.totalAmount, 0);
+        const grossTotal = entries.reduce((s, e) => s + salaryGrossAmt(e.category, e.totalAmount), 0);
         document.getElementById('salaryDayGross').textContent = `총 매출: ${grossTotal.toLocaleString()}원`;
         listContainer.innerHTML = entries.map(e => {
             const cardAmt = (e.totalAmount || 0) - (e.cashAmount || 0);
@@ -1199,7 +1205,7 @@ async function renderCalendar() {
             const [exY, exM, exD] = data.date.split('-').map(Number);
             const expDate = new Date(exY, exM - 1, exD);
             const val = calendarMode === 'salary' ? (data.netAmount || 0) : (data.amount || 0);
-            const cellVal = calendarMode === 'salary' ? (data.totalAmount || 0) : (data.amount || 0);
+            const cellVal = calendarMode === 'salary' ? salaryGrossAmt(data.category, data.totalAmount || 0) : (data.amount || 0);
             if (!amountsByDate[data.date]) amountsByDate[data.date] = 0;
             amountsByDate[data.date] += cellVal;
             if (expDate >= periodStart && expDate <= periodEnd) {
