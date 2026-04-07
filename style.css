@@ -84,7 +84,7 @@ body {
 .calendar-mode-toggle {
   display: flex;
   gap: 6px;
-  padding: 8px 4px 4px;
+  padding: 8px 12px 4px;
 }
 
 .mode-btn {
