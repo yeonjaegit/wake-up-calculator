@@ -1213,14 +1213,17 @@ async function renderCalendar() {
                 const cat = data.category || '기타';
                 categoryTotals[cat] = (categoryTotals[cat] || 0) + val;
                 const pay = (calendarMode === 'salary' ? data.paymentType : data.payment) || '기타';
-                const payAmt = calendarMode === 'salary' ? (data.totalAmount || 0) : val;
+                const grossAmt = calendarMode === 'salary' ? salaryGrossAmt(data.category, data.totalAmount || 0) : val;
+                const payAmt = grossAmt;
                 if (calendarMode === 'salary' && pay === '분할') {
-                    const cash = data.cashAmount || 0;
-                    const card = (data.totalAmount || 0) - cash;
+                    const rawTotal = data.totalAmount || 0;
+                    const rawCash = data.cashAmount || 0;
+                    const cashFrac = rawTotal > 0 ? rawCash / rawTotal : 0;
+                    const cash = Math.round(grossAmt * cashFrac);
+                    const card = grossAmt - cash;
                     paymentTotals['현금'] = (paymentTotals['현금'] || 0) + cash;
                     paymentTotals['카드'] = (paymentTotals['카드'] || 0) + card;
-                    const total = data.totalAmount || 0;
-                    const cashFrac = total > 0 ? cash / total : 0;
+                    const total = rawTotal;
                     netByPayment['현금'] = (netByPayment['현금'] || 0) + Math.round(val * cashFrac);
                     netByPayment['카드'] = (netByPayment['카드'] || 0) + Math.round(val * (1 - cashFrac));
                 } else {
