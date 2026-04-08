@@ -732,7 +732,7 @@ function addExpenseForSelectedDay() {
                 }));
             }
             Promise.all(promises)
-                .then(() => { loadDayExpenses(currentSelectedDate); loadExpenses(); })
+                .then(() => { cancelEdit(); loadDayExpenses(currentSelectedDate); loadExpenses(); })
                 .catch(e => alert(`저장 실패: ${e.message}`));
         } else {
             db.collection('users').doc(currentUser.uid).collection('expenses').add({
@@ -740,7 +740,7 @@ function addExpenseForSelectedDay() {
                 category, amount, memo, payment,
                 timestamp: new Date()
             })
-            .then(() => { loadDayExpenses(currentSelectedDate); loadExpenses(); })
+            .then(() => { cancelEdit(); loadDayExpenses(currentSelectedDate); loadExpenses(); })
             .catch(e => alert(`저장 실패: ${e.message}`));
         }
     }
