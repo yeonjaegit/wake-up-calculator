@@ -793,26 +793,28 @@ function salaryGrossAmt(category, amount) {
 }
 
 function calcSalaryNet(category, paymentType, totalAmount, cashAmt) {
-    // 중간 시술자 분대비율 (1~3번은 혼자 시술 -> 비율 1.0)
+    // 중간 시술자 분배비율
     let splitRatio;
     if (category === 'H만 진행') splitRatio = 0.4;
     else if (category === '헤어메이크업 (M만)') splitRatio = 0.6;
     else splitRatio = 1.0;
 
-    function applyCard(amt) { return amt * 0.97; }
-    function applyVatAndShop(amt) { return amt * 0.9 * 0.4; }
+    // 샵 공식: (총액 × 10/11 - 카드금액 × 0.03) × 0.4 × 0.967
+    // VAT: 부가세 포함가 역산 (÷11), 카드수수료: 총액 기준 차감, 소득세3%+지방세0.3%=3.3%
+    const SHOP = 0.4;
+    const TAX = 0.967;
+    function cNet(amt) { return amt * (10 / 11) * SHOP * TAX; }           // 현금
+    function kNet(amt) { return amt * (10 / 11 - 0.03) * SHOP * TAX; }    // 카드
 
     if (paymentType === '현금') {
-        return Math.round(applyVatAndShop(totalAmount * splitRatio));
+        return Math.round(cNet(totalAmount * splitRatio));
     } else if (paymentType === '카드') {
-        return Math.round(applyVatAndShop(applyCard(totalAmount) * splitRatio));
+        return Math.round(kNet(totalAmount * splitRatio));
     } else {
         // 분할: 현금부분만 입력받고, 카드 = 총액 - 현금
         const cash = cashAmt || 0;
         const card = totalAmount - cash;
-        const cashNet = Math.round(applyVatAndShop(cash * splitRatio));
-        const cardNet = Math.round(applyVatAndShop(applyCard(card) * splitRatio));
-        return cashNet + cardNet;
+        return Math.round(cNet(cash * splitRatio) + kNet(card * splitRatio));
     }
 }
 
