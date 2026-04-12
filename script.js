@@ -854,7 +854,7 @@ async function loadSalaryDayEntries(dateStr) {
         const entries = [];
         snapshot.forEach(doc => entries.push({ id: doc.id, ...doc.data() }));
         entries.sort((a, b) => new Date(b.timestamp?.toDate?.() || b.timestamp) - new Date(a.timestamp?.toDate?.() || a.timestamp));
-        const grossTotal = entries.reduce((s, e) => s + salaryGrossAmt(e.category, e.totalAmount), 0);
+        const grossTotal = entries.reduce((s, e) => s + (e.totalAmount || 0), 0);
         document.getElementById('salaryDayGross').textContent = `총 매출: ${grossTotal.toLocaleString()}원`;
         listContainer.innerHTML = entries.map(e => {
             const cardAmt = (e.totalAmount || 0) - (e.cashAmount || 0);
