@@ -719,6 +719,7 @@ function addExpenseForSelectedDay() {
         if (installment > 1) {
             const perMonth = Math.round(amount / installment);
             const [iy, im, id] = currentSelectedDate.split('-').map(Number);
+            const installmentGroup = `${currentSelectedDate}-${category}-${installment}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`;
             const promises = [];
             for (let i = 0; i < installment; i++) {
                 const d = new Date(iy, im - 1 + i, id);
@@ -728,6 +729,7 @@ function addExpenseForSelectedDay() {
                     category: `${category} (${i+1}/${installment})`,
                     amount: perMonth,
                     memo, payment,
+                    installmentGroup,
                     timestamp: new Date()
                 }));
             }
@@ -1105,7 +1107,35 @@ function deleteExpense(expenseId) {
 
     if (!isConfirmed) return; // 취소 누르면 종료
 
-    db.collection('users').doc(currentUser.uid).collection('expenses').doc(expenseId).delete()
+    const expensesRef = db.collection('users').doc(currentUser.uid).collection('expenses');
+    const expenseDoc = expensesRef.doc(expenseId);
+
+    expenseDoc.get()
+        .then(doc => {
+            if (!doc.exists) throw new Error('삭제할 지출을 찾을 수 없습니다.');
+            const data = doc.data();
+            if (data?.installmentGroup) {
+                return expensesRef.where('installmentGroup', '==', data.installmentGroup).get()
+                    .then(snapshot => Promise.all(snapshot.docs.map(d => d.ref.delete())));
+            }
+
+            const match = typeof data?.category === 'string' && data.category.match(/^(.+?) \((\d+)\/(\d+)\)$/);
+            if (match) {
+                const baseCategory = match[1];
+                const totalParts = match[3];
+                return expensesRef.get().then(snapshot => {
+                    const toDelete = snapshot.docs.filter(d => {
+                        const cat = d.data().category;
+                        return typeof cat === 'string'
+                            && cat.startsWith(`${baseCategory} (`)
+                            && cat.endsWith(`/${totalParts})`);
+                    });
+                    return Promise.all(toDelete.map(d => d.ref.delete()));
+                });
+            }
+
+            return expenseDoc.delete();
+        })
         .then(() => {
             loadDayExpenses(currentSelectedDate);
             loadExpenses();
