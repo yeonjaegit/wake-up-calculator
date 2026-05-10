@@ -451,6 +451,7 @@ body {
   border-radius: 28px;
   padding: 8px 12px 20px;
   /* max-height: 88vh; overflow-y: auto; */
+  overflow: visible;
   position: relative;
 }
 
@@ -645,7 +646,7 @@ select.login-input {
 }
 
 .salary-table th {
-  padding: 6px 2px;
+  padding: 4px 1px;
   text-align: center;
   border: 1px solid #d8c8f5;
   font-weight: 700;
@@ -655,10 +656,11 @@ select.login-input {
 }
 
 .salary-table td {
-  padding: 4px 2px;
+  padding: 2px 1px;
   text-align: right;
   border: 1px solid #e8def8;
   font-size: 8px;
+  line-height: 1;
 }
 
 .salary-table td:first-child {

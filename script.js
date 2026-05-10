@@ -954,12 +954,12 @@ async function buildSalaryTableContent() {
         const table = container.querySelector('.salary-table');
         if (table) {
             const rows = table.querySelectorAll('tr').length;
-            const availableHeight = window.innerHeight - 200; // 모달 패딩, 헤더 등 고려
-            const estimatedRowHeight = 14; // px
+            const availableHeight = window.innerHeight - 100; // 모달 패딩, 헤더 등 고려
+            const estimatedRowHeight = 10; // px
             const totalEstimatedHeight = rows * estimatedRowHeight;
             if (totalEstimatedHeight > availableHeight) {
                 const scale = availableHeight / totalEstimatedHeight;
-                const newFontSize = Math.max(6, 8 * scale); // 최소 6px
+                const newFontSize = Math.max(5, 8 * scale); // 최소 5px
                 table.style.fontSize = newFontSize + 'px';
                 const ths = table.querySelectorAll('th');
                 ths.forEach(th => th.style.fontSize = (newFontSize - 1) + 'px');
