@@ -850,7 +850,7 @@ async function buildSalaryTableContent() {
 
         // 테이블 생성
         let tableHTML = `
-            <div style="font-size: 10px; color: #7c5cbf; margin-bottom: 12px; text-align: center; font-weight: 600;">${periodText}</div>
+            <div style="font-size: 10px; color: #7c5cbf; margin-bottom: 8px; text-align: center; font-weight: 600;">${periodText}</div>
             <table class="salary-table">
                 <thead>
                     <tr>
@@ -954,7 +954,7 @@ async function buildSalaryTableContent() {
         const table = container.querySelector('.salary-table');
         if (table) {
             const rows = table.querySelectorAll('tr').length;
-            const availableHeight = window.innerHeight - 100; // 모달 패딩, 헤더 등 고려
+            const availableHeight = window.innerHeight - 50; // 모달 패딩, 헤더 등 고려
             const estimatedRowHeight = 10; // px
             const totalEstimatedHeight = rows * estimatedRowHeight;
             if (totalEstimatedHeight > availableHeight) {
