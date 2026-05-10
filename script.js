@@ -858,8 +858,8 @@ async function buildSalaryTableContent() {
                         <th>M만</th>
                         <th>H만</th>
                         <th>H만 진행</th>
-                        <th>헤어메이크업</th>
                         <th>헤어메이크업 (M만)</th>
+                        <th>헤어메이크업</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -875,6 +875,8 @@ async function buildSalaryTableContent() {
             const dayEntries = byDate[dateStr];
             let dayCard = 0, dayCash = 0, dayRaw = 0, dayGross = 0;
             let catsAmount = { 'M만': 0, 'H만': 0, 'H만 진행': 0, '헤어메이크업': 0, '헤어메이크업 (M만)': 0 };
+            let dayCardByCat = { 'M만': 0, 'H만': 0, 'H만 진행': 0, '헤어메이크업': 0, '헤어메이크업 (M만)': 0 };
+            let dayCashByCat = { 'M만': 0, 'H만': 0, 'H만 진행': 0, '헤어메이크업': 0, '헤어메이크업 (M만)': 0 };
 
             dayEntries.forEach(e => {
                 const cat = e.category || '기타';
@@ -894,6 +896,8 @@ async function buildSalaryTableContent() {
                     totalCatGross[cat] += gross;
                     totalCatCard[cat] += card;
                     totalCatCash[cat] += cash;
+                    dayCardByCat[cat] += card;
+                    dayCashByCat[cat] += cash;
                 }
             });
 
@@ -903,13 +907,19 @@ async function buildSalaryTableContent() {
             totalCash += dayCash;
 
             const dayDateFormatted = dateStr.split('-').slice(1).join('/');
+            const formatPayment = (card, cash) => {
+                const cardStr = card > 0 ? `카드:${formatAmount(card)}` : '';
+                const cashStr = cash > 0 ? `현금:${formatAmount(cash)}` : '';
+                const both = [cardStr, cashStr].filter(s => s).join('<br/>');
+                return both ? `<span style="color:#5a3fa0;">${both}</span>` : '-';
+            };
             tableHTML += `<tr>
                 <td>${dayDateFormatted}</td>
-                <td>${catsAmount['M만'] > 0 ? formatAmount(catsAmount['M만']) : '-'}</td>
-                <td>${catsAmount['H만'] > 0 ? formatAmount(catsAmount['H만']) : '-'}</td>
-                <td>${catsAmount['H만 진행'] > 0 ? formatAmount(catsAmount['H만 진행']) : '-'}</td>
-                <td>${catsAmount['헤어메이크업'] > 0 ? formatAmount(catsAmount['헤어메이크업']) : '-'}</td>
-                <td>${catsAmount['헤어메이크업 (M만)'] > 0 ? formatAmount(catsAmount['헤어메이크업 (M만)']) : '-'}</td>
+                <td>${catsAmount['M만'] > 0 ? formatPayment(dayCardByCat['M만'], dayCashByCat['M만']) : '-'}</td>
+                <td>${catsAmount['H만'] > 0 ? formatPayment(dayCardByCat['H만'], dayCashByCat['H만']) : '-'}</td>
+                <td>${catsAmount['H만 진행'] > 0 ? formatPayment(dayCardByCat['H만 진행'], dayCashByCat['H만 진행']) : '-'}</td>
+                <td>${catsAmount['헤어메이크업 (M만)'] > 0 ? formatPayment(dayCardByCat['헤어메이크업 (M만)'], dayCashByCat['헤어메이크업 (M만)']) : '-'}</td>
+                <td>${catsAmount['헤어메이크업'] > 0 ? formatPayment(dayCardByCat['헤어메이크업'], dayCashByCat['헤어메이크업']) : '-'}</td>
             </tr>`;
         });
 
@@ -917,25 +927,25 @@ async function buildSalaryTableContent() {
             <td>카드</td>
             <td>${totalCatCard['M만'] > 0 ? formatAmount(totalCatCard['M만']) : '-'}</td>
             <td>${totalCatCard['H만'] > 0 ? formatAmount(totalCatCard['H만']) : '-'}</td>
-            <td>${totalCatCard['H만 진행'] > 0 ? formatAmount(totalCatCard['H만 진행']) : '-'}</td>
+            <td>${totalCatCard['H만 진행'] > 0 ? formatAmount(totalCatCard['H만 진행']) + '(' + formatAmount(Math.round(totalCatCard['H만 진행'] * 0.4)) + ')' : '-'}</td>
+            <td>${totalCatCard['헤어메이크업 (M만)'] > 0 ? formatAmount(totalCatCard['헤어메이크업 (M만)']) + '(' + formatAmount(Math.round(totalCatCard['헤어메이크업 (M만)'] * 0.6)) + ')' : '-'}</td>
             <td>${totalCatCard['헤어메이크업'] > 0 ? formatAmount(totalCatCard['헤어메이크업']) : '-'}</td>
-            <td>${totalCatCard['헤어메이크업 (M만)'] > 0 ? formatAmount(totalCatCard['헤어메이크업 (M만)']) : '-'}</td>
         </tr>
         <tr class="total-row">
             <td>현금</td>
             <td>${totalCatCash['M만'] > 0 ? formatAmount(totalCatCash['M만']) : '-'}</td>
             <td>${totalCatCash['H만'] > 0 ? formatAmount(totalCatCash['H만']) : '-'}</td>
-            <td>${totalCatCash['H만 진행'] > 0 ? formatAmount(totalCatCash['H만 진행']) : '-'}</td>
+            <td>${totalCatCash['H만 진행'] > 0 ? formatAmount(totalCatCash['H만 진행']) + '(' + formatAmount(Math.round(totalCatCash['H만 진행'] * 0.4)) + ')' : '-'}</td>
+            <td>${totalCatCash['헤어메이크업 (M만)'] > 0 ? formatAmount(totalCatCash['헤어메이크업 (M만)']) + '(' + formatAmount(Math.round(totalCatCash['헤어메이크업 (M만)'] * 0.6)) + ')' : '-'}</td>
             <td>${totalCatCash['헤어메이크업'] > 0 ? formatAmount(totalCatCash['헤어메이크업']) : '-'}</td>
-            <td>${totalCatCash['헤어메이크업 (M만)'] > 0 ? formatAmount(totalCatCash['헤어메이크업 (M만)']) : '-'}</td>
         </tr>
         <tr class="total-row">
             <td>합계</td>
-            <td>${totalCatAmounts['M만'] > 0 ? formatAmount(totalCatAmounts['M만']) : '-'}</td>
-            <td>${totalCatAmounts['H만'] > 0 ? formatAmount(totalCatAmounts['H만']) : '-'}</td>
-            <td>${totalCatAmounts['H만 진행'] > 0 ? formatAmount(totalCatAmounts['H만 진행']) + '(' + formatAmount(totalCatGross['H만 진행']) + ')' : '-'}</td>
-            <td>${totalCatAmounts['헤어메이크업'] > 0 ? formatAmount(totalCatAmounts['헤어메이크업']) : '-'}</td>
-            <td>${totalCatAmounts['헤어메이크업 (M만)'] > 0 ? formatAmount(totalCatAmounts['헤어메이크업 (M만)']) + '(' + formatAmount(totalCatGross['헤어메이크업 (M만)']) + ')' : '-'}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>카드: ${formatAmount(totalCatCard['M만'] + totalCatCard['H만'] + totalCatCard['H만 진행'] + totalCatCard['헤어메이크업 (M만)'])}(${formatAmount(Math.round(totalCatCard['M만'] + totalCatCard['H만'] + totalCatCard['H만 진행'] * 0.4 + totalCatCard['헤어메이크업 (M만)'] * 0.6))})<br/>현금: ${formatAmount(totalCatCash['M만'] + totalCatCash['H만'] + totalCatCash['H만 진행'] + totalCatCash['헤어메이크업 (M만)'])}(${formatAmount(Math.round(totalCatCash['M만'] + totalCatCash['H만'] + totalCatCash['H만 진행'] * 0.4 + totalCatCash['헤어메이크업 (M만)'] * 0.6))})</td>
+            <td></td>
         </tr></tbody></table>`;
 
         container.innerHTML = tableHTML;
