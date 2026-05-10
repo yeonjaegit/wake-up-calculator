@@ -908,9 +908,9 @@ async function buildSalaryTableContent() {
 
             const dayDateFormatted = dateStr.split('-').slice(1).join('/');
             const formatPayment = (card, cash) => {
-                const cardStr = card > 0 ? `카드:${formatAmount(card)}` : '';
-                const cashStr = cash > 0 ? `현금:${formatAmount(cash)}` : '';
-                const both = [cardStr, cashStr].filter(s => s).join('<br/>');
+                const cardStr = card > 0 ? `카:${formatAmount(card)}` : '';
+                const cashStr = cash > 0 ? `현:${formatAmount(cash)}` : '';
+                const both = [cardStr, cashStr].filter(s => s).join(' ');
                 return both ? `<span style="color:#5a3fa0;">${both}</span>` : '-';
             };
             tableHTML += `<tr>
