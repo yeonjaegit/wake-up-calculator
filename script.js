@@ -850,7 +850,7 @@ async function buildSalaryTableContent() {
 
         // 테이블 생성
         let tableHTML = `
-            <div style="font-size: 12px; color: #7c5cbf; margin-bottom: 12px; text-align: center; font-weight: 600;">${periodText}</div>
+            <div style="font-size: 10px; color: #7c5cbf; margin-bottom: 12px; text-align: center; font-weight: 600;">${periodText}</div>
             <table class="salary-table">
                 <thead>
                     <tr>
