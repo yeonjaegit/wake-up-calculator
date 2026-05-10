@@ -782,7 +782,166 @@ function switchCalendarMode(mode) {
     calendarMode = mode;
     document.getElementById('modeLedgerBtn').classList.toggle('active', mode === 'ledger');
     document.getElementById('modeSalaryBtn').classList.toggle('active', mode === 'salary');
+    document.getElementById('salaryTableBtn').style.display = mode === 'salary' ? 'block' : 'none';
     renderCalendar();
+}
+
+// 소수점 표기: 120000 → 12.2, 10500 → 10.5
+function formatAmount(value) {
+    const num = value || 0;
+    return (num / 10000).toFixed(1).replace(/\.0$/, '');
+}
+
+function showSalaryTableModal() {
+    const modal = document.getElementById('salaryTableModal');
+    if (!modal) return;
+    buildSalaryTableContent();
+    modal.style.display = 'flex';
+}
+
+function closeSalaryTableModal() {
+    const modal = document.getElementById('salaryTableModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function buildSalaryTableContent() {
+    if (!currentUser) return;
+    const container = document.getElementById('salaryTableContent');
+    if (!container) return;
+
+    try {
+        // 기간 설정 (renderCalendar와 동일한 로직)
+        const startDay = getActivePeriod().startDay;
+        const periodStart = new Date(getActiveCalendarDate().getFullYear(), getActiveCalendarDate().getMonth(), startDay);
+        const periodEnd = new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, startDay - 1);
+
+        const snapshot = await db.collection('users').doc(currentUser.uid).collection('salaryEntries').get();
+        const entries = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const [exY, exM, exD] = data.date.split('-').map(Number);
+            const expDate = new Date(exY, exM - 1, exD);
+            // 기간 내의 데이터만 수집
+            if (expDate >= periodStart && expDate <= periodEnd) {
+                entries.push({ id: doc.id, ...data });
+            }
+        });
+        entries.sort((a, b) => {
+            const [aY, aM, aD] = a.date.split('-').map(Number);
+            const [bY, bM, bD] = b.date.split('-').map(Number);
+            return new Date(aY, aM - 1, aD) - new Date(bY, bM - 1, bD);
+        });
+
+        // 기간 텍스트
+        const psM = periodStart.getMonth() + 1;
+        const psD = periodStart.getDate();
+        const peM = periodEnd.getMonth() + 1;
+        const peD = periodEnd.getDate();
+        const periodText = periodStart.getFullYear() === periodEnd.getFullYear()
+            ? `${periodStart.getFullYear()}년 ${psM}월 ${psD}일 ~ ${peM}월 ${peD}일`
+            : `${periodStart.getFullYear()}년 ${psM}월 ${psD}일 ~ ${periodEnd.getFullYear()}년 ${peM}월 ${peD}일`;
+
+        // 날짜별로 그룹화
+        const byDate = {};
+        entries.forEach(e => {
+            if (!byDate[e.date]) byDate[e.date] = [];
+            byDate[e.date].push(e);
+        });
+
+        // 테이블 생성
+        let tableHTML = `
+            <div style="font-size: 12px; color: #7c5cbf; margin-bottom: 12px; text-align: center; font-weight: 600;">${periodText}</div>
+            <table class="salary-table">
+                <thead>
+                    <tr>
+                        <th>날짜</th>
+                        <th>M만</th>
+                        <th>H만</th>
+                        <th>H만 진행</th>
+                        <th>헤어메이크업</th>
+                        <th>헤어메이크업 (M만)</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        let totalCard = 0, totalCash = 0, totalRaw = 0, totalGross = 0;
+        let totalCatAmounts = { 'M만': 0, 'H만': 0, 'H만 진행': 0, '헤어메이크업': 0, '헤어메이크업 (M만)': 0 };
+        let totalCatGross = { 'M만': 0, 'H만': 0, 'H만 진행': 0, '헤어메이크업': 0, '헤어메이크업 (M만)': 0 };
+        let totalCatCard = { 'M만': 0, 'H만': 0, 'H만 진행': 0, '헤어메이크업': 0, '헤어메이크업 (M만)': 0 };
+        let totalCatCash = { 'M만': 0, 'H만': 0, 'H만 진행': 0, '헤어메이크업': 0, '헤어메이크업 (M만)': 0 };
+
+        Object.keys(byDate).sort().forEach(dateStr => {
+            const dayEntries = byDate[dateStr];
+            let dayCard = 0, dayCash = 0, dayRaw = 0, dayGross = 0;
+            let catsAmount = { 'M만': 0, 'H만': 0, 'H만 진행': 0, '헤어메이크업': 0, '헤어메이크업 (M만)': 0 };
+
+            dayEntries.forEach(e => {
+                const cat = e.category || '기타';
+                const raw = e.totalAmount || 0;
+                const gross = salaryGrossAmt(cat, raw);
+                const card = e.cardAmount || 0;
+                const cash = e.cashAmount || 0;
+
+                dayRaw += raw;
+                dayGross += gross;
+                dayCard += card;
+                dayCash += cash;
+
+                if (catsAmount.hasOwnProperty(cat)) {
+                    catsAmount[cat] += raw;
+                    totalCatAmounts[cat] += raw;
+                    totalCatGross[cat] += gross;
+                    totalCatCard[cat] += card;
+                    totalCatCash[cat] += cash;
+                }
+            });
+
+            totalRaw += dayRaw;
+            totalGross += dayGross;
+            totalCard += dayCard;
+            totalCash += dayCash;
+
+            const dayDateFormatted = dateStr.split('-').slice(1).join('/');
+            tableHTML += `<tr>
+                <td>${dayDateFormatted}</td>
+                <td>${catsAmount['M만'] > 0 ? formatAmount(catsAmount['M만']) : '-'}</td>
+                <td>${catsAmount['H만'] > 0 ? formatAmount(catsAmount['H만']) : '-'}</td>
+                <td>${catsAmount['H만 진행'] > 0 ? formatAmount(catsAmount['H만 진행']) : '-'}</td>
+                <td>${catsAmount['헤어메이크업'] > 0 ? formatAmount(catsAmount['헤어메이크업']) : '-'}</td>
+                <td>${catsAmount['헤어메이크업 (M만)'] > 0 ? formatAmount(catsAmount['헤어메이크업 (M만)']) : '-'}</td>
+            </tr>`;
+        });
+
+        tableHTML += `<tr class="total-row">
+            <td>카드</td>
+            <td>${totalCatCard['M만'] > 0 ? formatAmount(totalCatCard['M만']) : '-'}</td>
+            <td>${totalCatCard['H만'] > 0 ? formatAmount(totalCatCard['H만']) : '-'}</td>
+            <td>${totalCatCard['H만 진행'] > 0 ? formatAmount(totalCatCard['H만 진행']) : '-'}</td>
+            <td>${totalCatCard['헤어메이크업'] > 0 ? formatAmount(totalCatCard['헤어메이크업']) : '-'}</td>
+            <td>${totalCatCard['헤어메이크업 (M만)'] > 0 ? formatAmount(totalCatCard['헤어메이크업 (M만)']) : '-'}</td>
+        </tr>
+        <tr class="total-row">
+            <td>현금</td>
+            <td>${totalCatCash['M만'] > 0 ? formatAmount(totalCatCash['M만']) : '-'}</td>
+            <td>${totalCatCash['H만'] > 0 ? formatAmount(totalCatCash['H만']) : '-'}</td>
+            <td>${totalCatCash['H만 진행'] > 0 ? formatAmount(totalCatCash['H만 진행']) : '-'}</td>
+            <td>${totalCatCash['헤어메이크업'] > 0 ? formatAmount(totalCatCash['헤어메이크업']) : '-'}</td>
+            <td>${totalCatCash['헤어메이크업 (M만)'] > 0 ? formatAmount(totalCatCash['헤어메이크업 (M만)']) : '-'}</td>
+        </tr>
+        <tr class="total-row">
+            <td>합계</td>
+            <td>${totalCatAmounts['M만'] > 0 ? formatAmount(totalCatAmounts['M만']) : '-'}</td>
+            <td>${totalCatAmounts['H만'] > 0 ? formatAmount(totalCatAmounts['H만']) : '-'}</td>
+            <td>${totalCatAmounts['H만 진행'] > 0 ? formatAmount(totalCatAmounts['H만 진행']) + '(' + formatAmount(totalCatGross['H만 진행']) + ')' : '-'}</td>
+            <td>${totalCatAmounts['헤어메이크업'] > 0 ? formatAmount(totalCatAmounts['헤어메이크업']) : '-'}</td>
+            <td>${totalCatAmounts['헤어메이크업 (M만)'] > 0 ? formatAmount(totalCatAmounts['헤어메이크업 (M만)']) + '(' + formatAmount(totalCatGross['헤어메이크업 (M만)']) + ')' : '-'}</td>
+        </tr></tbody></table>`;
+
+        container.innerHTML = tableHTML;
+    } catch (e) {
+        container.innerHTML = `<p style="color: #a090c8; text-align: center;">데이터를 불러오지 못했습니다.</p>`;
+    }
 }
 
 // ========================================
@@ -1392,6 +1551,8 @@ window.onclick = function (event) {
     }
     const salaryDayModal = document.getElementById('salaryDayModal');
     if (event.target === salaryDayModal) closeSalaryModal();
+    const salaryTableModal = document.getElementById('salaryTableModal');
+    if (event.target === salaryTableModal) closeSalaryTableModal();
 };
 
 document.addEventListener('DOMContentLoaded', () => {

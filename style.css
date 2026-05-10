@@ -616,6 +616,62 @@ select.login-input {
   color: #2d1b69; width: 100%;
 }
 
+/* 총매출표 모달 */
+.salary-table-container {
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.salary-table-wrapper {
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.salary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3d2068;
+}
+
+.salary-table thead {
+  background: #ede7f6;
+  position: sticky;
+  top: 0;
+}
+
+.salary-table th {
+  padding: 10px 6px;
+  text-align: center;
+  border: 1px solid #d8c8f5;
+  font-weight: 700;
+  color: #5a3fa0;
+  min-width: 40px;
+}
+
+.salary-table td {
+  padding: 8px 6px;
+  text-align: right;
+  border: 1px solid #e8def8;
+}
+
+.salary-table td:first-child {
+  text-align: center;
+  font-weight: 700;
+  color: #5a3fa0;
+}
+
+.salary-table tbody tr:hover {
+  background: #f5f0ff;
+}
+
+.salary-table .total-row {
+  background: #f0ebff;
+  font-weight: 700;
+  border-top: 2px solid #d8c8f5;
+}
+
 /* 기상 계산 탭 */
 #calcTab { padding: 28px 20px; text-align: center; background: #f0ebff; min-height: 100vh; }
 h1 { font-size: 20px; margin-bottom: 8px; font-weight: 800; color: #5a3fa0; }

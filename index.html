@@ -192,6 +192,16 @@
         <div id="summary2Breakdown" class="category-breakdown"></div>
       </div>
 
+      <button id="salaryTableBtn" onclick="showSalaryTableModal()" class="login-btn email-btn" style="width:calc(100% - 24px);margin:0 auto 16px;display:none;">총 매출표</button>
+
+      <div id="salaryTableModal" class="modal" style="display:none;">
+        <div class="modal-content salary-table-container">
+          <span class="close" onclick="closeSalaryTableModal()">&times;</span>
+          <h2>총 매출표</h2>
+          <div id="salaryTableContent" class="salary-table-wrapper"></div>
+        </div>
+      </div>
+
     </div>
 
   </div>
