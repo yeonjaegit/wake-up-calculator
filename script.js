@@ -397,8 +397,8 @@ document.getElementById("calculateBtn").addEventListener("click", function () {
     }
     let [hour, min] = goTime.split(':').map(Number);
 
-    // 알람 1: 2시간 30분 전
-    let hour1 = hour; let min1 = min - 150; // 2시간 30분 = 150분
+    // 알람 1: 2시간 10분 전
+    let hour1 = hour; let min1 = min - 130; // 2시간 10분 = 130분
     while (min1 < 0) { min1 += 60; hour1 -= 1; }
     while (hour1 < 0) hour1 += 24;
 
