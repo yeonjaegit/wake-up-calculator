@@ -949,6 +949,24 @@ async function buildSalaryTableContent() {
         </tr></tbody></table>`;
 
         container.innerHTML = tableHTML;
+
+        // 모바일에서 스크롤 없이 전체가 보이도록 글자 크기 조정
+        const table = container.querySelector('.salary-table');
+        if (table) {
+            const rows = table.querySelectorAll('tr').length;
+            const availableHeight = window.innerHeight - 200; // 모달 패딩, 헤더 등 고려
+            const estimatedRowHeight = 14; // px
+            const totalEstimatedHeight = rows * estimatedRowHeight;
+            if (totalEstimatedHeight > availableHeight) {
+                const scale = availableHeight / totalEstimatedHeight;
+                const newFontSize = Math.max(6, 8 * scale); // 최소 6px
+                table.style.fontSize = newFontSize + 'px';
+                const ths = table.querySelectorAll('th');
+                ths.forEach(th => th.style.fontSize = (newFontSize - 1) + 'px');
+                const tds = table.querySelectorAll('td');
+                tds.forEach(td => td.style.fontSize = newFontSize + 'px');
+            }
+        }
     } catch (e) {
         container.innerHTML = `<p style="color: #a090c8; text-align: center;">데이터를 불러오지 못했습니다.</p>`;
     }
