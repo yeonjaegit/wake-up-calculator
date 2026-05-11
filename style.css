@@ -633,7 +633,7 @@ select.login-input {
 .salary-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 8px;
+  font-size: 10.5px;
   font-weight: 600;
   color: #3d2068;
 }
@@ -646,28 +646,28 @@ select.login-input {
 }
 
 .salary-table th {
-  padding: 4px 1px;
+  padding: 5.5px 2px;
   text-align: center;
   border: 1px solid #d8c8f5;
   font-weight: 700;
   color: #5a3fa0;
   min-width: 35px;
-  font-size: 7px;
+  font-size: 9.5px;
 }
 
 .salary-table td {
-  padding: 2px 1px;
+  padding: 2.5px 2px;
   text-align: right;
   border: 1px solid #e8def8;
-  font-size: 8px;
-  line-height: 1;
+  font-size: 10.5px;
+  line-height: 1.15;
 }
 
 .salary-table td:first-child {
   text-align: center;
   font-weight: 700;
   color: #5a3fa0;
-  min-width: 40px;
+  min-width: 52px;
 }
 
 .salary-table tbody tr:hover {
